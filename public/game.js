@@ -1,6 +1,7 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { chickenFrames, houseImg, playerSprites, zombieSprites } from "./assets.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAUunv1VCqselof5V6Jqj3gMthoer_fguE",
@@ -14,54 +15,6 @@ const fbApp = initializeApp(firebaseConfig);
 const auth = getAuth(fbApp);
 const db = getFirestore(fbApp);
 const gProv = new GoogleAuthProvider();
-const playerSprites = {};
-
-const spriteFiles = [
-  'adventurer_idle.png',
-  'adventurer_walk1.png',
-  'adventurer_walk2.png',
-  'adventurer_action1.png',
-  'adventurer_action2.png',
-  'adventurer_kick.png'
-];
-
-spriteFiles.forEach(name=>{
-  const img = new Image();
-  img.src = `assets/sprites/player/${name}`;
-  playerSprites[name] = img;
-});
-
-const zombieSprites = {};
-
-const zombieFiles = [
-  'zombie_idle.png',
-  'zombie_walk1.png',
-  'zombie_walk2.png',
-  'zombie_hurt.png',
-  'zombie_action1.png',
-  'zombie_action2.png'
-];
-
-zombieFiles.forEach(name=>{
-  const img = new Image();
-  img.src = `assets/sprites/zombie/${name}`;
-  zombieSprites[name] = img;
-});
-
-const houseImg = new Image();
-houseImg.src = 'assets/sprites/house/house.png';
-
-const chickenFrames = [
-  new Image(),
-  new Image(),
-  new Image(),
-  new Image()
-];
-
-chickenFrames[0].src = 'assets/sprites/galinha/sprite_04.png';
-chickenFrames[1].src = 'assets/sprites/galinha/sprite_05.png';
-chickenFrames[2].src = 'assets/sprites/galinha/sprite_06.png';
-chickenFrames[3].src = 'assets/sprites/galinha/sprite_07.png';
 
 let currentUser = null;
 
