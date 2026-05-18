@@ -3235,6 +3235,14 @@ function updateMusic(){
 // GAME LOOP
 // ══════════════════════════════════════
 let lastT=0;
+let loopStarted=false;
+
+function startLoop(){
+  if(loopStarted)return;
+  loopStarted=true;
+  requestAnimationFrame(ts=>{lastT=ts;loop(ts);});
+}
+
 function loop(ts){
   const dt=Math.min((ts-lastT)/1000,0.05);lastT=ts;
   if(gameRunning){
@@ -3266,7 +3274,7 @@ function startGame(){
 
   resize();
 
-  requestAnimationFrame(ts=>{lastT=ts;loop(ts);});
+  startLoop();
 
   if(!window.controlsReady){
     setupControls();
