@@ -1,0 +1,18 @@
+{
+  "name": "Sobrevivência Rural",
+  "short_name": "Rural",
+  "description": "Cultive, construa e sobreviva à noite.",
+  "start_url": "./index.html",
+  "display": "fullscreen",
+  "background_color": "#0b1f0b",
+  "theme_color": "#2f6b2f",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "assets/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
