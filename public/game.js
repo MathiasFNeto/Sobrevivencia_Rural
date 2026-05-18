@@ -2859,49 +2859,34 @@ function nearCells(){
   else if(keys['ArrowDown'] || keys['s'] || keys['S']) tr++;
   else if(keys['ArrowLeft'] || keys['a'] || keys['A']) tc--;
   else if(keys['ArrowRight'] || keys['d'] || keys['D']) tc++;
-  else tc++; // padrão: constrói à direita
+  else tc++;
+
   return [[pr,pc],[pr-1,pc],[pr+1,pc],[pr,pc-1],[pr,pc+1]].filter(([r,c])=>r>=0&&r<WH&&c>=0&&c<WW);
 }
 
-window.doAction=function(act){
-  const cells=nearCells();
-  const pc=Math.floor(player.x/TILE);
-  const pr=Math.floor(player.y/TILE);
+function actionEnter(cells){
+  if(inHouse){
+    inHouse=false;
+    closeMarket();
+    showMsg('Saiu da casa.');
+    return;
+  }
 
-  let tr = pr;
-  let tc = pc;
-
-  if(keys['ArrowUp'] || keys['w'] || keys['W']) tr--;
-  else if(keys['ArrowDown'] || keys['s'] || keys['S']) tr++;
-  else if(keys['ArrowLeft'] || keys['a'] || keys['A']) tc--;
-  else if(keys['ArrowRight'] || keys['d'] || keys['D']) tc++;
-  else tc++; // padrão: constrói à direita
-
-    if(act==='enter'){
-      if(inHouse){
-        inHouse=false;
-        closeMarket();
-        showMsg('Saiu da casa.');
-        return;
-      }
-
-      for(const [r,c] of cells){
-        if(world[r][c].t===HOUSE || world[r][c].t===HDOOR){
-          inHouse=true;
-          showMsg('Dentro da casa!');
-          openMarket();
-          return;
-        }
-      }
-
-      showMsg('Nenhuma casa por perto.');
+  for(const [r,c] of cells){
+    if(world[r][c].t===HOUSE || world[r][c].t===HDOOR){
+      inHouse=true;
+      showMsg('Dentro da casa!');
+      openMarket();
       return;
     }
-  if(act==='chop'){
-  for(const[r,c]of cells){
+  }
 
+  showMsg('Nenhuma casa por perto.');
+}
+
+function actionChop(cells){
+  for(const [r,c] of cells){
     if(world[r][c].t===TREE){
-
       if(wood >= MAX_INV){
         showMsg('Estoque de madeira cheio!');
         return;
@@ -2909,19 +2894,17 @@ window.doAction=function(act){
 
       player.action='chop';
       player.actionTimer=18;
-
       scythe.on=true;
       scythe.t=0;
       wood = Math.min(MAX_INV, wood + 2);
       world[r][c]={t:STUMP};
-      spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'🌳',26);
+      spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'\u{1F333}',26);
       showMsg('+2 madeira!');
       updateHUD();
       return;
     }
 
     if(world[r][c].t===STUMP){
-
       if(wood >= MAX_INV){
         showMsg('Estoque de madeira cheio!');
         return;
@@ -2929,7 +2912,7 @@ window.doAction=function(act){
 
       wood = Math.min(MAX_INV, wood + 1);
       world[r][c]={t:G};
-      spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'🌳',20);
+      spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'\u{1F333}',20);
       showMsg('+1 madeira (toco)');
       updateHUD();
       return;
@@ -2937,24 +2920,21 @@ window.doAction=function(act){
   }
 
   showMsg('Nenhuma arvore perto. Chegue mais perto!');
-  return;
 }
-  if(act==='mine'){
+
+function actionMine(cells){
   for(const [r,c] of cells){
     if(world[r][c].t===ROCK || world[r][c].t===MINE || world[r][c].t===BIGROCK){
-
       if(stone >= MAX_INV){
         showMsg('Estoque de pedra cheio!');
         return;
       }
+
       player.action='mine';
       player.actionTimer=18;
-
       stone = Math.min(MAX_INV, stone + 1);
-
       world[r][c] = {t:G};
-
-      spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'⛰️',24);
+      spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'\u26F0\uFE0F',24);
       showMsg('+1 pedra!');
       updateHUD();
       return;
@@ -2962,165 +2942,233 @@ window.doAction=function(act){
   }
 
   showMsg('Nenhuma pedra perto.');
-  return;
 }
-  if(act==='water'){
-    for(const[r,c]of cells){
-      if(world[r][c].t===WATER){water = Math.min(MAX_INV, water + 3);spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'🔵',22);showMsg('+3 agua coletada!');updateHUD();return;}
-    }
-    showMsg('Nenhuma agua perto.');return;
-  }
-  if(act==='plant'){
-    for(const[r,c]of cells){
-      const t=world[r][c].t;
 
-      if(!isFarmArea(r,c)){
-        showMsg('Só pode plantar dentro da área cercada.');
+function actionWater(cells){
+  for(const [r,c] of cells){
+    if(world[r][c].t===WATER){
+      water = Math.min(MAX_INV, water + 3);
+      spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'\u{1F535}',22);
+      showMsg('+3 agua coletada!');
+      updateHUD();
+      return;
+    }
+  }
+
+  showMsg('Nenhuma agua perto.');
+}
+
+function actionPlant(cells){
+  for(const [r,c] of cells){
+    const t=world[r][c].t;
+
+    if(!isFarmArea(r,c)){
+      showMsg('So pode plantar dentro da area cercada.');
+      return;
+    }
+
+    if(t===G || t===DIRT){
+      if(food<=0){
+        showMsg('Sem sementes/comida para plantar!');
         return;
       }
 
-      if(t===G || t===DIRT){
-        if(food<=0){
-          showMsg('Sem sementes/comida para plantar!');
-          return;
-        }
+      food--;
+      world[r][c]={t:CS,pd:day};
+      growTimers[r+','+c]=2;
+      showMsg('Plantou! Pronto em 2 dias.');
+      updateHUD();
+      return;
+    }
+  }
 
-        food--;
-        world[r][c]={t:CS,pd:day};
-        growTimers[r+','+c]=2;
+  showMsg('Nenhum espaco livre na plantacao.');
+}
 
-        showMsg('Plantou! Pronto em 2 dias.');
-        updateHUD();
-        return;
-      }
+function actionHarvest(cells){
+  for(const [r,c] of cells){
+    if(world[r][c].t===CR){
+      scythe.on=true;
+      scythe.t=0;
+      player.action='attack';
+      player.actionTimer=18;
+
+      const bonus=(world[r][c].pd!=null&&(day-world[r][c].pd)>=4)?2:1;
+      food = Math.min(MAX_INV, food + (3 * bonus));
+      world[r][c]={t:DIRT};
+      spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'\u{1F33D}',28);
+      showMsg(bonus>1?`+${3*bonus} comida (bonus por esperar!)`:'+3 comida colhida!');
+      updateHUD();
+      return;
     }
 
-    showMsg('Nenhum espaço livre na plantação.');
+    if(world[r][c].t===CM){
+      showMsg('Quase pronto! Mais 1 dia.');
+      return;
+    }
+
+    if(world[r][c].t===CS){
+      showMsg('Ainda crescendo...');
+      return;
+    }
+  }
+
+  showMsg('Nenhuma plantacao pronta perto.');
+}
+
+function actionEat(){
+  if(food<=0){
+    showMsg('Sem comida!');
     return;
   }
-  if(act==='harvest'){
-    for(const[r,c]of cells){
-      if(world[r][c].t===CR){
-        scythe.on=true;scythe.t=0;
-        player.action='attack';
-        player.actionTimer=18;
-        const bonus=(world[r][c].pd!=null&&(day-world[r][c].pd)>=4)?2:1;
-        food = Math.min(MAX_INV, food + (3 * bonus));world[r][c]={t:DIRT};
-        spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'🌽',28);
-        showMsg(bonus>1?`+${3*bonus} comida (bonus por esperar!)`:`+3 comida colhida!`);updateHUD();return;
-      }
-      if(world[r][c].t===CM){showMsg('Quase pronto! Mais 1 dia.');return;}
-      if(world[r][c].t===CS){showMsg('Ainda crescendo...');return;}
-    }
-    showMsg('Nenhuma plantacao pronta perto.');return;
-  }
-  if(act==='eat'){
-    if(food<=0){showMsg('Sem comida!');return;}
-    if(hp>=MAX_HP){showMsg('HP ja cheio!');return;}
-    food--;hp=Math.min(MAX_HP,hp+2);spawnP(player.x,player.y,'❤',22);showMsg(`+2 HP! (${Math.ceil(hp)}/${MAX_HP})`);updateHUD();return;
-  }
-  if(act==='drink'){
-    if(water<=0){showMsg('Sem agua!');return;}
-    if(stamina>=MAX_ST){showMsg('Forca ja cheia!');return;}
-    water--;stamina=Math.min(MAX_ST,stamina+2);spawnP(player.x,player.y,'🔵',22);showMsg(`+2 Forca! (${Math.ceil(stamina)}/${MAX_ST})`);updateHUD();return;
-  }
-  if(act==='attack'){
-    if(stone<=0){
-      showMsg('Sem pedras para atacar!');
-      return;
-    }
 
-    if(player.atkCd>0){
-      showMsg('Aguarde cooldown...');
-      return;
-    }
-
-    let target=null;
-    let minD=PLAYER_RANGE;
-
-    for(const e of enemies){
-      const d=Math.sqrt((e.x-player.x)**2+(e.y-player.y)**2);
-      if(d<minD){
-        minD=d;
-        target=e;
-      }
-    }
-
-    if(!target){
-      showMsg('Nenhum inimigo no alcance.');
-      return;
-    }
-
-    stone--;
-    player.atkCd=0.7;
-    player.action='attack';
-    player.actionTimer=18;
-
-    const angle=Math.atan2(target.y-player.y,target.x-player.x);
-
-    arrows.push({
-      x:player.x,
-      y:player.y,
-      angle,
-      vx:Math.cos(angle)*8,
-      vy:Math.sin(angle)*8,
-      life:1.2,
-      target,
-      type:'stone',
-      dmg:2
-    });
-
-    spawnP(player.x,player.y,'🪨',18);
-    showMsg('Pedra arremessada!');
-    updateHUD();
+  if(hp>=MAX_HP){
+    showMsg('HP ja cheio!');
     return;
   }
-  if(act==='tower'){
 
-    if(player.isWalking || joy.on){
-      showMsg('Pare para construir a torre.');
-      return;
-    }
+  food--;
+  hp=Math.min(MAX_HP,hp+2);
+  spawnP(player.x,player.y,'\u2764',22);
+  showMsg(`+2 HP! (${Math.ceil(hp)}/${MAX_HP})`);
+  updateHUD();
+}
 
-    const options=[
-      [pr-2, pc], // 2 blocos acima
-      [pr, pc+2], // 2 blocos à direita
-      [pr+2, pc], // 2 blocos abaixo
-      [pr, pc-2]  // 2 blocos à esquerda
-    ];
-
-    let spot=null;
-
-    for(const [r,c] of options){
-      if(r<0 || r>=WH || c<0 || c>=WW) continue;
-      if(world[r][c].t!==G) continue;
-      if(isFixed(r,c)) continue;
-
-      spot=[r,c];
-      break;
-    }
-
-    if(!spot){
-      showMsg('Nenhum bloco livre a 1 espaço de distância.');
-      return;
-    }
-
-    tr=spot[0];
-    tc=spot[1];
-
-    if(wood<3 || stone<1){
-      showMsg(`Precisa 3 madeira e 1 pedra. Voce tem: ${wood}m ${stone}p`);
-      return;
-    }
-
-    wood-=3;
-    stone-=1;
-    world[tr][tc]={t:TWR,hp:T_HP,st:0};
-
-    showMsg('Torre construída!');
-    updateHUD();
+function actionDrink(){
+  if(water<=0){
+    showMsg('Sem agua!');
     return;
   }
+
+  if(stamina>=MAX_ST){
+    showMsg('Forca ja cheia!');
+    return;
+  }
+
+  water--;
+  stamina=Math.min(MAX_ST,stamina+2);
+  spawnP(player.x,player.y,'\u{1F535}',22);
+  showMsg(`+2 Forca! (${Math.ceil(stamina)}/${MAX_ST})`);
+  updateHUD();
+}
+
+function findEnemyTarget(){
+  let target=null;
+  let minD=PLAYER_RANGE;
+
+  for(const e of enemies){
+    const d=Math.sqrt((e.x-player.x)**2+(e.y-player.y)**2);
+    if(d<minD){
+      minD=d;
+      target=e;
+    }
+  }
+
+  return target;
+}
+
+function actionAttack(){
+  if(stone<=0){
+    showMsg('Sem pedras para atacar!');
+    return;
+  }
+
+  if(player.atkCd>0){
+    showMsg('Aguarde cooldown...');
+    return;
+  }
+
+  const target=findEnemyTarget();
+
+  if(!target){
+    showMsg('Nenhum inimigo no alcance.');
+    return;
+  }
+
+  stone--;
+  player.atkCd=0.7;
+  player.action='attack';
+  player.actionTimer=18;
+
+  const angle=Math.atan2(target.y-player.y,target.x-player.x);
+
+  arrows.push({
+    x:player.x,
+    y:player.y,
+    angle,
+    vx:Math.cos(angle)*8,
+    vy:Math.sin(angle)*8,
+    life:1.2,
+    target,
+    type:'stone',
+    dmg:2
+  });
+
+  spawnP(player.x,player.y,'\u{1FAA8}',18);
+  showMsg('Pedra arremessada!');
+  updateHUD();
+}
+
+function actionTower(){
+  if(player.isWalking || joy.on){
+    showMsg('Pare para construir a torre.');
+    return;
+  }
+
+  const pc=Math.floor(player.x/TILE);
+  const pr=Math.floor(player.y/TILE);
+  const options=[
+    [pr-2, pc],
+    [pr, pc+2],
+    [pr+2, pc],
+    [pr, pc-2]
+  ];
+
+  let spot=null;
+
+  for(const [r,c] of options){
+    if(r<0 || r>=WH || c<0 || c>=WW) continue;
+    if(world[r][c].t!==G) continue;
+    if(isFixed(r,c)) continue;
+
+    spot=[r,c];
+    break;
+  }
+
+  if(!spot){
+    showMsg('Nenhum bloco livre a 1 espaco de distancia.');
+    return;
+  }
+
+  if(wood<3 || stone<1){
+    showMsg(`Precisa 3 madeira e 1 pedra. Voce tem: ${wood}m ${stone}p`);
+    return;
+  }
+
+  const [r,c]=spot;
+  wood-=3;
+  stone-=1;
+  world[r][c]={t:TWR,hp:T_HP,st:0};
+  showMsg('Torre construida!');
+  updateHUD();
+}
+
+function runAction(act, cells){
+  if(act==='enter')return actionEnter(cells);
+  if(act==='chop')return actionChop(cells);
+  if(act==='mine')return actionMine(cells);
+  if(act==='water')return actionWater(cells);
+  if(act==='plant')return actionPlant(cells);
+  if(act==='harvest')return actionHarvest(cells);
+  if(act==='eat')return actionEat();
+  if(act==='drink')return actionDrink();
+  if(act==='attack')return actionAttack();
+  if(act==='tower')return actionTower();
+}
+
+window.doAction=function(act){
+  const cells=nearCells();
+  return runAction(act, cells);
 };
 
 window.goSleep=function(){
