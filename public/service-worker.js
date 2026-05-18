@@ -1,10 +1,11 @@
-const CACHE_NAME = 'sobrevivencia-rural-v3';
+const CACHE_NAME = 'sobrevivencia-rural-v4';
 
 const urlsToCache = [
   './',
   './index.html',
   './style.css',
   './game.js',
+  './pwa.js',
   './service-worker.js',
   './manifest.json',
   './assets/icons/icon-512.png',
