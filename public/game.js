@@ -68,28 +68,95 @@ let currentUser = null;
 window.loginGoogle = async () => { try { await signInWithPopup(auth, gProv); } catch(e) { alert(e.message); } };
 window.loginAnon   = async () => { try { await signInAnonymously(auth); } catch(e) { alert(e.message); } };
 
+const SAVE_VERSION = 1;
+
+function serializeCell(cell){
+  return [
+    cell.t,
+    cell.hp ?? -1,
+    cell.pd ?? -1,
+    cell.main ? 1 : 0,
+    cell.part ? 1 : 0,
+    cell.rockPart || '',
+    cell.housePart || ''
+  ].join(',');
+}
+
+function deserializeCell(value){
+  const parts = String(value || '').split(',');
+  const cell = {t:Number(parts[0])};
+  const hpValue = Number(parts[1]);
+  const plantedDay = Number(parts[2]);
+  const main = Number(parts[3]);
+  const part = Number(parts[4]);
+  const rockPart = parts[5] || '';
+  const housePart = parts[6] || '';
+
+  if(!Number.isFinite(cell.t))cell.t=G;
+  if(hpValue>=0)cell.hp=hpValue;
+  if(plantedDay>=0)cell.pd=plantedDay;
+  if(main===1)cell.main=true;
+  if(part===1)cell.part=true;
+  if(rockPart)cell.rockPart=rockPart;
+  if(housePart)cell.housePart=housePart;
+
+  return cell;
+}
+
+function serializeWorld(){
+  return world.map(row=>row.map(serializeCell).join('|')).join(';');
+}
+
+function applySerializedWorld(savedWorld){
+  if(!savedWorld)return;
+
+  savedWorld.split(';').forEach((row,r)=>{
+    if(r<0 || r>=WH || !world[r])return;
+
+    row.split('|').forEach((cell,c)=>{
+      if(c<0 || c>=WW)return;
+      world[r][c]=deserializeCell(cell);
+    });
+  });
+}
+
+function serializePoints(points){
+  return points.map(point=>point.join(',')).join('|');
+}
+
+function deserializePoints(value){
+  if(!value)return [];
+
+  return value
+    .split('|')
+    .map(item=>item.split(',').map(Number))
+    .filter(([r,c])=>Number.isFinite(r) && Number.isFinite(c));
+}
+
+function parseSavedJson(value, fallback){
+  if(!value)return fallback;
+
+  try {
+    return JSON.parse(value);
+  } catch(e) {
+    console.error('Save JSON invalido:', e);
+    return fallback;
+  }
+}
+
 window.saveGame = async () => {
   if (!currentUser) return;
   try {
     await setDoc(doc(db, 'games', currentUser.uid), {
+      saveVersion: SAVE_VERSION,
       px: Math.round(player.x), py: Math.round(player.y),
       day, phase, hp, stamina, food, water, wood, stone, money, eggs, milk,
       chickenCount: chickens.length,
       cowCount: cows.length,
-      wd: world.map(r => r.map(c =>
-        [
-        c.t,
-        c.hp ?? -1,
-        c.pd ?? -1,
-        c.main ? 1 : 0,
-        c.part ? 1 : 0,
-        c.rockPart || '',
-        c.housePart || ''
-        ].join(',')
-      ).join('|')).join(';'),
-      ft: fixedTrees.map(p=>p.join(',')).join('|'),
-      fr: fixedRocks.map(p=>p.join(',')).join('|'),
-      fw: fixedWater.map(p=>p.join(',')).join('|'),
+      wd: serializeWorld(),
+      ft: serializePoints(fixedTrees),
+      fr: serializePoints(fixedRocks),
+      fw: serializePoints(fixedWater),
       gt: JSON.stringify(growTimers),
       ap: JSON.stringify(APPEARANCE),
       savedAt: serverTimestamp()
@@ -109,35 +176,12 @@ window.loadSave = async (uid) => {
       money=d.money??0;
       eggs=d.eggs??0;
       milk=d.milk??0;
-      if (d.wd) {
-        d.wd.split(';').forEach((row,r)=>{
-          row.split('|').forEach((cell,c)=>{
-            const parts = cell.split(',');
-
-            const t = Number(parts[0]);
-            const h = Number(parts[1]);
-            const pd = Number(parts[2]);
-            const main = Number(parts[3]);
-            const part = Number(parts[4]);
-            const rockPart = parts[5] || '';
-            const housePart = parts[6] || '';
-
-            world[r][c]={t};
-
-            if(h>=0)world[r][c].hp=h;
-            if(pd>=0)world[r][c].pd=pd;
-            if(main===1)world[r][c].main=true;
-            if(part===1)world[r][c].part=true;
-            if(rockPart)world[r][c].rockPart=rockPart;
-            if(housePart)world[r][c].housePart=housePart;
-          });
-        });
-      }
-      if(d.ft)fixedTrees=d.ft.split('|').map(s=>s.split(',').map(Number));
-      if(d.fr)fixedRocks=d.fr.split('|').map(s=>s.split(',').map(Number));
-      if(d.fw)fixedWater=d.fw.split('|').map(s=>s.split(',').map(Number));
-      if(d.gt)growTimers=JSON.parse(d.gt);
-      if(d.ap)Object.assign(APPEARANCE,JSON.parse(d.ap));
+      applySerializedWorld(d.wd);
+      if(d.ft)fixedTrees=deserializePoints(d.ft);
+      if(d.fr)fixedRocks=deserializePoints(d.fr);
+      if(d.fw)fixedWater=deserializePoints(d.fw);
+      growTimers=parseSavedJson(d.gt, growTimers);
+      Object.assign(APPEARANCE,parseSavedJson(d.ap, {}));
       createCampLayout();
       const savedChickens = d.chickenCount ?? 2;
       const savedCows = d.cowCount ?? 2;
