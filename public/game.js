@@ -82,22 +82,56 @@ function parseSavedJson(value, fallback){
   }
 }
 
+function buildSaveData(){
+  return {
+    saveVersion: SAVE_VERSION,
+    px: Math.round(player.x), py: Math.round(player.y),
+    day, phase, hp, stamina, food, water, wood, stone, money, eggs, milk,
+    chickenCount: chickens.length,
+    cowCount: cows.length,
+    wd: serializeWorld(),
+    ft: serializePoints(fixedTrees),
+    fr: serializePoints(fixedRocks),
+    fw: serializePoints(fixedWater),
+    gt: JSON.stringify(growTimers),
+    ap: JSON.stringify(APPEARANCE)
+  };
+}
+
+function applySaveData(d){
+  player.x=d.px||player.x;
+  player.y=d.py||player.y;
+  day=d.day||1;
+  phase=d.phase||'day';
+  hp=d.hp??MAX_HP;
+  stamina=d.stamina??MAX_ST;
+  food=d.food??5;
+  water=d.water??8;
+  wood=d.wood??3;
+  stone=d.stone??2;
+  money=d.money??0;
+  eggs=d.eggs??0;
+  milk=d.milk??0;
+
+  applySerializedWorld(d.wd);
+  if(d.ft)fixedTrees=deserializePoints(d.ft);
+  if(d.fr)fixedRocks=deserializePoints(d.fr);
+  if(d.fw)fixedWater=deserializePoints(d.fw);
+  growTimers=parseSavedJson(d.gt, growTimers);
+  Object.assign(APPEARANCE,parseSavedJson(d.ap, {}));
+  createCampLayout();
+
+  const savedChickens = d.chickenCount ?? 2;
+  const savedCows = d.cowCount ?? 2;
+
+  while(chickens.length < savedChickens) addChicken();
+  while(cows.length < savedCows) addCow();
+}
+
 window.saveGame = async () => {
   if (!currentUser) return;
   try {
-    await saveGameDocument(currentUser.uid, {
-      saveVersion: SAVE_VERSION,
-      px: Math.round(player.x), py: Math.round(player.y),
-      day, phase, hp, stamina, food, water, wood, stone, money, eggs, milk,
-      chickenCount: chickens.length,
-      cowCount: cows.length,
-      wd: serializeWorld(),
-      ft: serializePoints(fixedTrees),
-      fr: serializePoints(fixedRocks),
-      fw: serializePoints(fixedWater),
-      gt: JSON.stringify(growTimers),
-      ap: JSON.stringify(APPEARANCE)
-    });
+    await saveGameDocument(currentUser.uid, buildSaveData());
   } catch(e) { console.error(e); }
 };
 
@@ -105,25 +139,7 @@ window.loadSave = async (uid) => {
   try {
     const d = await loadGameDocument(uid);
     if (d) {
-      player.x=d.px||player.x; player.y=d.py||player.y;
-      day=d.day||1; phase=d.phase||'day';
-      hp=d.hp??MAX_HP; stamina=d.stamina??MAX_ST;
-      food=d.food??5; water=d.water??8; wood=d.wood??3; stone=d.stone??2;
-      money=d.money??0;
-      eggs=d.eggs??0;
-      milk=d.milk??0;
-      applySerializedWorld(d.wd);
-      if(d.ft)fixedTrees=deserializePoints(d.ft);
-      if(d.fr)fixedRocks=deserializePoints(d.fr);
-      if(d.fw)fixedWater=deserializePoints(d.fw);
-      growTimers=parseSavedJson(d.gt, growTimers);
-      Object.assign(APPEARANCE,parseSavedJson(d.ap, {}));
-      createCampLayout();
-      const savedChickens = d.chickenCount ?? 2;
-      const savedCows = d.cowCount ?? 2;
-
-      while(chickens.length < savedChickens) addChicken();
-      while(cows.length < savedCows) addCow();      
+      applySaveData(d);
       showMsg('Jogo carregado! Dia '+day);
       return true;
     }
