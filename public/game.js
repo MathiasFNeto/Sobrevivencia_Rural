@@ -1,25 +1,10 @@
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, signInAnonymously, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { chickenFrames, houseImg, playerSprites, zombieSprites } from "./assets.js";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyAUunv1VCqselof5V6Jqj3gMthoer_fguE",
-  authDomain: "fazendinha-7489e.firebaseapp.com",
-  projectId: "fazendinha-7489e",
-  storageBucket: "fazendinha-7489e.firebasestorage.app",
-  messagingSenderId: "79868797370",
-  appId: "1:79868797370:web:f995a32f2320b9b2de3d83"
-};
-const fbApp = initializeApp(firebaseConfig);
-const auth = getAuth(fbApp);
-const db = getFirestore(fbApp);
-const gProv = new GoogleAuthProvider();
+import { listenAuthState, loadGameDocument, loginAnonymously, loginWithGoogle, logoutFirebase, saveGameDocument } from "./firebase-service.js";
 
 let currentUser = null;
 
-window.loginGoogle = async () => { try { await signInWithPopup(auth, gProv); } catch(e) { alert(e.message); } };
-window.loginAnon   = async () => { try { await signInAnonymously(auth); } catch(e) { alert(e.message); } };
+window.loginGoogle = async () => { try { await loginWithGoogle(); } catch(e) { alert(e.message); } };
+window.loginAnon   = async () => { try { await loginAnonymously(); } catch(e) { alert(e.message); } };
 
 const SAVE_VERSION = 1;
 
@@ -100,7 +85,7 @@ function parseSavedJson(value, fallback){
 window.saveGame = async () => {
   if (!currentUser) return;
   try {
-    await setDoc(doc(db, 'games', currentUser.uid), {
+    await saveGameDocument(currentUser.uid, {
       saveVersion: SAVE_VERSION,
       px: Math.round(player.x), py: Math.round(player.y),
       day, phase, hp, stamina, food, water, wood, stone, money, eggs, milk,
@@ -111,17 +96,15 @@ window.saveGame = async () => {
       fr: serializePoints(fixedRocks),
       fw: serializePoints(fixedWater),
       gt: JSON.stringify(growTimers),
-      ap: JSON.stringify(APPEARANCE),
-      savedAt: serverTimestamp()
+      ap: JSON.stringify(APPEARANCE)
     });
   } catch(e) { console.error(e); }
 };
 
 window.loadSave = async (uid) => {
   try {
-    const snap = await getDoc(doc(db, 'games', uid));
-    if (snap.exists()) {
-      const d = snap.data();
+    const d = await loadGameDocument(uid);
+    if (d) {
       player.x=d.px||player.x; player.y=d.py||player.y;
       day=d.day||1; phase=d.phase||'day';
       hp=d.hp??MAX_HP; stamina=d.stamina??MAX_ST;
@@ -148,7 +131,7 @@ window.loadSave = async (uid) => {
   return false;
 };
 
-onAuthStateChanged(auth, async user => {
+listenAuthState(async user => {
   currentUser = user;
 
   if (user) {
@@ -3627,5 +3610,5 @@ window.logoutGame = async function(){
   document.getElementById('attack-btn').style.display='none';
   document.getElementById('auth-screen').style.display='flex';
 
-  await signOut(auth);
+  await logoutFirebase();
 }
