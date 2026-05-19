@@ -3344,14 +3344,14 @@ function handleHouseMarket(key){
 }
 
 const MARKET_ITEMS = [
-  {id:'wood', label:'🪵 Madeira', priceBuy:1, priceSell:1, max:MAX_INV},
-  {id:'stone', label:'🪨 Pedra', priceBuy:1, priceSell:1, max:MAX_INV},
-  {id:'food', label:'🌽 Comida', priceBuy:1, priceSell:1, max:MAX_INV},
-  {id:'water', label:'💧 Água', priceBuy:1, priceSell:1, max:MAX_INV},
-  {id:'eggs', label:'🥚 Ovo', priceBuy:null, priceSell:5, max:MAX_INV},
-  {id:'milk', label:'🥛 Leite', priceBuy:null, priceSell:10, max:MAX_INV},
-  {id:'chicken', label:'🐔 Galinha', priceBuy:15, priceSell:null, max:20},
-  {id:'cow', label:'🐄 Vaca', priceBuy:30, priceSell:null, max:10}
+  {id:'wood', label:'🪵 Madeira', category:'Recursos', priceBuy:1, priceSell:1, max:MAX_INV},
+  {id:'stone', label:'🪨 Pedra', category:'Recursos', priceBuy:1, priceSell:1, max:MAX_INV},
+  {id:'food', label:'🌽 Comida', category:'Recursos', priceBuy:1, priceSell:1, max:MAX_INV},
+  {id:'water', label:'💧 Água', category:'Recursos', priceBuy:1, priceSell:1, max:MAX_INV},
+  {id:'eggs', label:'🥚 Ovo', category:'Produção', priceBuy:null, priceSell:5, max:MAX_INV},
+  {id:'milk', label:'🥛 Leite', category:'Produção', priceBuy:null, priceSell:10, max:MAX_INV},
+  {id:'chicken', label:'🐔 Galinha', category:'Animais', priceBuy:15, priceSell:null, max:20},
+  {id:'cow', label:'🐄 Vaca', category:'Animais', priceBuy:30, priceSell:null, max:10}
 ];
 
 function getItemValue(id){
@@ -3375,6 +3375,37 @@ function setItemValue(id,val){
   if(id==='milk')milk=val;
 }
 
+function getMarketQty(id){
+  return Math.max(1,parseInt(document.getElementById('qty-'+id)?.value)||1);
+}
+
+function updateMarketTotal(id){
+  const item=MARKET_ITEMS.find(i=>i.id===id);
+  const el=document.getElementById('total-'+id);
+  if(!item || !el)return;
+
+  const qtd=getMarketQty(id);
+  const buyTotal=item.priceBuy!=null ? item.priceBuy*qtd : null;
+  const sellTotal=item.priceSell!=null ? item.priceSell*qtd : null;
+  const parts=[];
+
+  if(buyTotal!=null)parts.push(`Comprar: 🪙 ${buyTotal}`);
+  if(sellTotal!=null)parts.push(`Vender: 🪙 ${sellTotal}`);
+
+  el.textContent=parts.join(' | ');
+}
+
+window.updateMarketTotal=updateMarketTotal;
+
+window.marketQty=function(id,delta){
+  const input=document.getElementById('qty-'+id);
+  if(!input)return;
+
+  const current=getMarketQty(id);
+  input.value=Math.max(1,current+delta);
+  updateMarketTotal(id);
+};
+
 function openMarket(){
   const menu=document.getElementById('market-menu');
   const list=document.getElementById('market-list');
@@ -3382,35 +3413,55 @@ function openMarket(){
   document.getElementById('market-money').textContent=money;
   list.innerHTML='';
 
+  let currentCategory='';
+
   MARKET_ITEMS.forEach(item=>{
+    if(item.category!==currentCategory){
+      currentCategory=item.category;
+
+      const title=document.createElement('div');
+      title.className='market-category';
+      title.textContent=currentCategory;
+      list.appendChild(title);
+    }
+
     const row=document.createElement('div');
     row.className='market-row';
 
     const current=getItemValue(item.id);
 
     row.innerHTML=`
-      <div>
-        <b>${item.label}</b><br>
-        <small>Você tem: ${current}${item.max ? ' / '+item.max : ''}</small><br>
+      <div class="market-item-info">
+        <b>${item.label}</b>
+        <small>Você tem: ${current}${item.max ? ' / '+item.max : ''}</small>
         <small>
-          ${item.priceBuy!=null ? 'Comprar: 🪙 '+item.priceBuy : ''}
+          ${item.priceBuy!=null ? 'Compra un.: 🪙 '+item.priceBuy : ''}
           ${item.priceBuy!=null && item.priceSell!=null ? ' | ' : ''}
-          ${item.priceSell!=null ? 'Vender: 🪙 '+item.priceSell : ''}
+          ${item.priceSell!=null ? 'Venda un.: 🪙 '+item.priceSell : ''}
         </small>
       </div>
 
-      <input id="qty-${item.id}" type="number" min="1" value="1">
+      <div class="qty-control">
+        <button type="button" onclick="marketQty('${item.id}',-1)">−</button>
+        <input id="qty-${item.id}" type="number" min="1" value="1" oninput="updateMarketTotal('${item.id}')">
+        <button type="button" onclick="marketQty('${item.id}',1)">+</button>
+      </div>
 
-      <button class="buy-btn" ${item.priceBuy==null?'disabled style="opacity:.35"':''} onclick="marketBuy('${item.id}')">
-        Comprar
-      </button>
+      <div class="market-total" id="total-${item.id}"></div>
 
-      <button class="sell-btn" ${item.priceSell==null?'disabled style="opacity:.35"':''} onclick="marketSell('${item.id}')">
-        Vender
-      </button>
+      <div class="market-actions">
+        <button class="buy-btn" ${item.priceBuy==null?'disabled':''} onclick="marketBuy('${item.id}')">
+          Comprar
+        </button>
+
+        <button class="sell-btn" ${item.priceSell==null?'disabled':''} onclick="marketSell('${item.id}')">
+          Vender
+        </button>
+      </div>
     `;
 
     list.appendChild(row);
+    updateMarketTotal(item.id);
   });
 
   menu.style.display='flex';
@@ -3422,7 +3473,7 @@ function closeMarket(){
 
 window.marketBuy=function(id){
   const item=MARKET_ITEMS.find(i=>i.id===id);
-  const qtd=Math.max(1,parseInt(document.getElementById('qty-'+id).value)||1);
+  const qtd=getMarketQty(id);
 
   if(item.priceBuy==null)return;
 
@@ -3454,7 +3505,7 @@ window.marketBuy=function(id){
 
 window.marketSell=function(id){
   const item=MARKET_ITEMS.find(i=>i.id===id);
-  const qtd=Math.max(1,parseInt(document.getElementById('qty-'+id).value)||1);
+  const qtd=getMarketQty(id);
 
   if(item.priceSell==null)return;
 

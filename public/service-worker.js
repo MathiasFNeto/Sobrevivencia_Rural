@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sobrevivencia-rural-v11';
+const CACHE_NAME = 'sobrevivencia-rural-v12';
 
 const urlsToCache = [
   './',

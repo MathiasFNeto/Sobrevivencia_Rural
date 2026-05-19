@@ -107,9 +107,9 @@ body{background:#1a2e1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
 #market-box{
   background:#122712;
   border:2px solid #c8944a;
-  border-radius:18px;
+  border-radius:8px;
   padding:18px;
-  width:min(560px,94vw);
+  width:min(680px,94vw);
   max-height:82vh;
   overflow-y:auto;
   box-shadow:0 0 30px rgba(0,0,0,0.5);
@@ -128,31 +128,55 @@ body{background:#1a2e1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   margin-bottom:14px;
 }
 
+.market-category{
+  color:#f5c842;
+  font-size:12px;
+  font-weight:900;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  margin:14px 2px 7px;
+}
+
 .market-row{
   display:grid;
-  grid-template-columns:1fr;
-  .market-row input,
-  .market-row button{
-    width:100%;
-  }
-
-  .market-row input{
-    box-sizing:border-box;
-  }
+  grid-template-columns:1.35fr 118px 1fr 150px;
   gap:8px;
   align-items:center;
   background:#1a3a1a;
   border:1px solid #2a6a2a;
-  border-radius:10px;
+  border-radius:8px;
   padding:8px;
   margin-bottom:8px;
   color:#d8f5c8;
   font-size:13px;
 }
 
-.market-row input{
-  width:72px;
+.market-item-info{
+  display:flex;
+  flex-direction:column;
+  gap:3px;
+  min-width:0;
+}
+
+.market-item-info b{
+  color:#fff4bd;
+}
+
+.market-item-info small{
+  color:#cfe8bf;
+}
+
+.qty-control{
+  display:grid;
+  grid-template-columns:32px 1fr 32px;
+  gap:4px;
+  align-items:center;
+}
+
+.qty-control input{
+  width:100%;
   padding:7px;
+  box-sizing:border-box;
   border-radius:7px;
   border:1px solid #4a9a2a;
   background:#0d1a0d;
@@ -161,12 +185,32 @@ body{background:#1a2e1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   font-weight:bold;
 }
 
-.market-row button{
+.qty-control button,
+.market-actions button{
   border:none;
   border-radius:7px;
   padding:8px 6px;
   font-weight:800;
   cursor:pointer;
+}
+
+.qty-control button{
+  background:#244824;
+  color:#d8f5c8;
+  border:1px solid #3b7a3b;
+}
+
+.market-total{
+  color:#ffe0a0;
+  font-size:12px;
+  font-weight:800;
+  text-align:center;
+}
+
+.market-actions{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:6px;
 }
 
 .buy-btn{
@@ -179,6 +223,11 @@ body{background:#1a2e1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   color:#ffe0a0;
 }
 
+.market-actions button:disabled{
+  opacity:.35;
+  cursor:not-allowed;
+}
+
 .market-close{
   width:100%;
   margin-top:10px;
@@ -189,6 +238,16 @@ body{background:#1a2e1a;font-family:'Segoe UI',sans-serif;overflow:hidden;height
   color:white;
   font-weight:900;
   cursor:pointer;
+}
+
+@media (max-width:640px){
+  .market-row{
+    grid-template-columns:1fr;
+  }
+
+  .market-total{
+    text-align:left;
+  }
 }
 canvas{
   display:block;
