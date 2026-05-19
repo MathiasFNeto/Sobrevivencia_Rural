@@ -26,7 +26,6 @@
 
 <div id="hud">
   <div id="hud-top">
-    <!-- SVG icons instead of emoji for desktop compatibility -->
     <div class="stat">
       <svg class="stat-icon" viewBox="0 0 24 24" fill="#e8d44d"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/><circle cx="12" cy="12" r="9" fill="none" stroke="#e8d44d" stroke-width="1.5"/><text x="12" y="16" text-anchor="middle" font-size="11" fill="#e8d44d" font-weight="bold">🌽</text></svg>
       <svg viewBox="0 0 20 20" width="16" height="16" style="flex-shrink:0"><text x="10" y="15" text-anchor="middle" font-size="14">🌽</text></svg>
@@ -36,12 +35,10 @@
       <svg viewBox="0 0 20 20" width="16" height="16" style="flex-shrink:0"><text x="10" y="15" text-anchor="middle" font-size="14">🪙</text></svg>
       <span id="h-money">0</span>
     </div>
-
     <div class="stat">
       <svg viewBox="0 0 20 20" width="16" height="16" style="flex-shrink:0"><text x="10" y="15" text-anchor="middle" font-size="14">🥚</text></svg>
       <span id="h-eggs">0</span>
     </div>
-
     <div class="stat">
       <svg viewBox="0 0 20 20" width="16" height="16" style="flex-shrink:0"><text x="10" y="15" text-anchor="middle" font-size="14">🥛</text></svg>
       <span id="h-milk">0</span>
@@ -93,15 +90,12 @@
   <source src="assets/audio/latido.mp3" type="audio/mpeg">
 </audio>
 
-<!-- Joystick floating on canvas left -->
 <div id="joystick-zone">
   <div id="joystick-base"><div id="joystick-thumb"></div></div>
 </div>
 
-<!-- Attack button floating on canvas right -->
 <button id="attack-btn" onclick="doAction('attack')">⚔️</button>
 
-<!-- Action panel bottom -->
 <div id="action-panel">
   <button id="mine-btn" class="side-action-btn" onclick="doAction('mine')">
   ⛏️
@@ -110,7 +104,7 @@
   <button id="wood-btn" class="side-action-btn" onclick="doAction('chop')">
   🪓
   </button>
-  <button class="act-btn" onclick="doAction('water')"><div class="act-icon">💧</div><div class="act-lbl">Agua</div></button>
+  <button class="act-btn" onclick="doAction('water')"><div class="act-icon">💧</div><div class="act-lbl">Água</div></button>
   <button class="act-btn" onclick="doAction('plant')"><div class="act-icon">🌱</div><div class="act-lbl">Plantar</div></button>
   <button class="act-btn" onclick="doAction('harvest')"><div class="act-icon">🌾</div><div class="act-lbl">Colher</div></button>
   <button class="act-btn" onclick="doAction('eat')"><div class="act-icon">🍽️</div><div class="act-lbl">Comer+HP</div></button>
@@ -123,7 +117,7 @@
 
 <div id="gameover">
   <h2>GAME OVER</h2>
-  <p id="go-msg">Sobreviveu ate o Dia 1</p>
+  <p id="go-msg">Sobreviveu até o Dia 1</p>
   <button class="btn-restart" onclick="restartGame()">Jogar Novamente</button>
 </div>
 

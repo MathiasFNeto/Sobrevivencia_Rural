@@ -2797,7 +2797,7 @@ function actionChop(cells){
     }
   }
 
-  showMsg('Nenhuma arvore perto. Chegue mais perto!');
+  showMsg('Nenhuma árvore perto. Chegue mais perto!');
 }
 
 function actionMine(cells){
@@ -2827,13 +2827,13 @@ function actionWater(cells){
     if(world[r][c].t===WATER){
       water = Math.min(MAX_INV, water + 3);
       spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'\u{1F535}',22);
-      showMsg('+3 agua coletada!');
+      showMsg('+3 água coletada!');
       updateHUD();
       return;
     }
   }
 
-  showMsg('Nenhuma agua perto.');
+  showMsg('Nenhuma água perto.');
 }
 
 function actionPlant(cells){
@@ -2841,7 +2841,7 @@ function actionPlant(cells){
     const t=world[r][c].t;
 
     if(!isFarmArea(r,c)){
-      showMsg('So pode plantar dentro da area cercada.');
+      showMsg('Só pode plantar dentro da área cercada.');
       return;
     }
 
@@ -2860,7 +2860,7 @@ function actionPlant(cells){
     }
   }
 
-  showMsg('Nenhum espaco livre na plantacao.');
+  showMsg('Nenhum espaço livre na plantação.');
 }
 
 function actionHarvest(cells){
@@ -2891,7 +2891,7 @@ function actionHarvest(cells){
     }
   }
 
-  showMsg('Nenhuma plantacao pronta perto.');
+  showMsg('Nenhuma plantação pronta perto.');
 }
 
 function actionEat(){
@@ -2914,19 +2914,19 @@ function actionEat(){
 
 function actionDrink(){
   if(water<=0){
-    showMsg('Sem agua!');
+    showMsg('Sem água!');
     return;
   }
 
   if(stamina>=MAX_ST){
-    showMsg('Forca ja cheia!');
+    showMsg('Força já cheia!');
     return;
   }
 
   water--;
   stamina=Math.min(MAX_ST,stamina+2);
   spawnP(player.x,player.y,'\u{1F535}',22);
-  showMsg(`+2 Forca! (${Math.ceil(stamina)}/${MAX_ST})`);
+  showMsg(`+2 Força! (${Math.ceil(stamina)}/${MAX_ST})`);
   updateHUD();
 }
 
@@ -3014,12 +3014,12 @@ function actionTower(){
   }
 
   if(!spot){
-    showMsg('Nenhum bloco livre a 1 espaco de distancia.');
+    showMsg('Nenhum bloco livre a 1 espaço de distância.');
     return;
   }
 
   if(wood<3 || stone<1){
-    showMsg(`Precisa 3 madeira e 1 pedra. Voce tem: ${wood}m ${stone}p`);
+    showMsg(`Precisa 3 madeira e 1 pedra. Você tem: ${wood}m ${stone}p`);
     return;
   }
 
@@ -3027,7 +3027,7 @@ function actionTower(){
   wood-=3;
   stone-=1;
   world[r][c]={t:TWR,hp:T_HP,st:0};
-  showMsg('Torre construida!');
+  showMsg('Torre construída!');
   updateHUD();
 }
 
@@ -3050,7 +3050,7 @@ window.doAction=function(act){
 };
 
 window.goSleep=function(){
-  if(phase==='night'){showMsg('Ja e noite! Sobreviva!');return;}
+  if(phase==='night'){showMsg('Já é noite! Sobreviva!');return;}
   startNight();
 };
 
@@ -3089,7 +3089,7 @@ function endNight(){
   food=Math.max(0,food-1);water=Math.max(0,water-1);
   stamina=Math.min(MAX_ST,stamina+4);
   if(food===0){hp=Math.max(0,hp-2);showMsg('Sem comida! -2 HP.');}
-  else if(water===0){hp=Math.max(0,hp-1);showMsg('Sem agua! -1 HP.');}
+  else if(water===0){hp=Math.max(0,hp-1);showMsg('Sem água! -1 HP.');}
   else{hp=Math.min(MAX_HP,hp+2);showMsg('Dia '+day+'! +2 HP de descanso.');}
   updateGrow();
 
