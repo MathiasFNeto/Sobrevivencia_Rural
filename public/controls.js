@@ -42,6 +42,40 @@ export function setupControls({
     }
   }
 
+  function clearVerticalKeys(){
+    keys['ArrowUp']=false;
+    keys['ArrowDown']=false;
+    keys['w']=false;
+    keys['W']=false;
+    keys['s']=false;
+    keys['S']=false;
+  }
+
+  function clearHorizontalKeys(){
+    keys['ArrowLeft']=false;
+    keys['ArrowRight']=false;
+    keys['a']=false;
+    keys['A']=false;
+    keys['d']=false;
+    keys['D']=false;
+  }
+
+  function isUpKey(key){
+    return key==='ArrowUp' || key==='w' || key==='W';
+  }
+
+  function isDownKey(key){
+    return key==='ArrowDown' || key==='s' || key==='S';
+  }
+
+  function isLeftKey(key){
+    return key==='ArrowLeft' || key==='a' || key==='A';
+  }
+
+  function isRightKey(key){
+    return key==='ArrowRight' || key==='d' || key==='D';
+  }
+
   window.addEventListener('keydown',e=>{
     if(gameKeys.has(e.key)){
       e.preventDefault();
@@ -49,6 +83,30 @@ export function setupControls({
 
     if(isInHouse()){
       handleHouseMarket(e.key);
+    }
+
+    if(isUpKey(e.key)){
+      keys['ArrowDown']=false;
+      keys['s']=false;
+      keys['S']=false;
+    }
+
+    if(isDownKey(e.key)){
+      keys['ArrowUp']=false;
+      keys['w']=false;
+      keys['W']=false;
+    }
+
+    if(isLeftKey(e.key)){
+      keys['ArrowRight']=false;
+      keys['d']=false;
+      keys['D']=false;
+    }
+
+    if(isRightKey(e.key)){
+      keys['ArrowLeft']=false;
+      keys['a']=false;
+      keys['A']=false;
     }
 
     keys[e.key]=true;
@@ -63,7 +121,12 @@ export function setupControls({
     }
 
     keys[e.key]=false;
-    if(e.key===' ')setRunHeld(false);
+
+    if(e.key===' ' || e.key==='Shift'){
+      setRunHeld(false);
+      clearVerticalKeys();
+      clearHorizontalKeys();
+    }
   });
 
   window.addEventListener('blur',resetMovement);
