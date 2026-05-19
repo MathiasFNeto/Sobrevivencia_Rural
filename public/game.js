@@ -1,86 +1,11 @@
 import { chickenFrames, houseImg, playerSprites, zombieSprites } from "./assets.js";
 import { listenAuthState, loadGameDocument, loginAnonymously, loginWithGoogle, logoutFirebase, saveGameDocument } from "./firebase-service.js";
+import { SAVE_VERSION, applySerializedWorld, deserializePoints, parseSavedJson, serializePoints, serializeWorld } from "./save-system.js";
 
 let currentUser = null;
 
 window.loginGoogle = async () => { try { await loginWithGoogle(); } catch(e) { alert(e.message); } };
 window.loginAnon   = async () => { try { await loginAnonymously(); } catch(e) { alert(e.message); } };
-
-const SAVE_VERSION = 1;
-
-function serializeCell(cell){
-  return [
-    cell.t,
-    cell.hp ?? -1,
-    cell.pd ?? -1,
-    cell.main ? 1 : 0,
-    cell.part ? 1 : 0,
-    cell.rockPart || '',
-    cell.housePart || ''
-  ].join(',');
-}
-
-function deserializeCell(value){
-  const parts = String(value || '').split(',');
-  const cell = {t:Number(parts[0])};
-  const hpValue = Number(parts[1]);
-  const plantedDay = Number(parts[2]);
-  const main = Number(parts[3]);
-  const part = Number(parts[4]);
-  const rockPart = parts[5] || '';
-  const housePart = parts[6] || '';
-
-  if(!Number.isFinite(cell.t))cell.t=G;
-  if(hpValue>=0)cell.hp=hpValue;
-  if(plantedDay>=0)cell.pd=plantedDay;
-  if(main===1)cell.main=true;
-  if(part===1)cell.part=true;
-  if(rockPart)cell.rockPart=rockPart;
-  if(housePart)cell.housePart=housePart;
-
-  return cell;
-}
-
-function serializeWorld(){
-  return world.map(row=>row.map(serializeCell).join('|')).join(';');
-}
-
-function applySerializedWorld(savedWorld){
-  if(!savedWorld)return;
-
-  savedWorld.split(';').forEach((row,r)=>{
-    if(r<0 || r>=WH || !world[r])return;
-
-    row.split('|').forEach((cell,c)=>{
-      if(c<0 || c>=WW)return;
-      world[r][c]=deserializeCell(cell);
-    });
-  });
-}
-
-function serializePoints(points){
-  return points.map(point=>point.join(',')).join('|');
-}
-
-function deserializePoints(value){
-  if(!value)return [];
-
-  return value
-    .split('|')
-    .map(item=>item.split(',').map(Number))
-    .filter(([r,c])=>Number.isFinite(r) && Number.isFinite(c));
-}
-
-function parseSavedJson(value, fallback){
-  if(!value)return fallback;
-
-  try {
-    return JSON.parse(value);
-  } catch(e) {
-    console.error('Save JSON invalido:', e);
-    return fallback;
-  }
-}
 
 function buildSaveData(){
   return {
@@ -89,7 +14,7 @@ function buildSaveData(){
     day, phase, hp, stamina, food, water, wood, stone, money, eggs, milk,
     chickenCount: chickens.length,
     cowCount: cows.length,
-    wd: serializeWorld(),
+    wd: serializeWorld(world),
     ft: serializePoints(fixedTrees),
     fr: serializePoints(fixedRocks),
     fw: serializePoints(fixedWater),
@@ -113,7 +38,7 @@ function applySaveData(d){
   eggs=d.eggs??0;
   milk=d.milk??0;
 
-  applySerializedWorld(d.wd);
+  applySerializedWorld(world, d.wd, WW, WH, G);
   if(d.ft)fixedTrees=deserializePoints(d.ft);
   if(d.fr)fixedRocks=deserializePoints(d.fr);
   if(d.fw)fixedWater=deserializePoints(d.fw);
