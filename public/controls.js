@@ -1,0 +1,72 @@
+export function setupControls({
+  doAction,
+  handleHouseMarket,
+  isInHouse,
+  joy,
+  keys,
+  setRunHeld
+}){
+  window.addEventListener('keydown',e=>{
+    if(isInHouse()){
+      handleHouseMarket(e.key);
+    }
+
+    keys[e.key]=true;
+
+    if(e.key===' ')setRunHeld(true);
+    if(e.key==='e'||e.key==='E')doAction('chop');
+  });
+
+  window.addEventListener('keyup',e=>{
+    keys[e.key]=false;
+    if(e.key===' ')setRunHeld(false);
+  });
+
+  const jbase=document.getElementById('joystick-base');
+  const jthumb=document.getElementById('joystick-thumb');
+  const maxR=28;
+
+  document.getElementById('joystick-zone').addEventListener('touchstart',e=>{
+    e.preventDefault();
+
+    const rect=jbase.getBoundingClientRect();
+    joy.sx=rect.left+rect.width/2;
+    joy.sy=rect.top+rect.height/2;
+    joy.on=true;
+  },{passive:false});
+
+  window.addEventListener('touchmove',e=>{
+    if(!joy.on)return;
+
+    e.preventDefault();
+
+    const t=e.touches[0];
+    let dx=t.clientX-joy.sx;
+    let dy=t.clientY-joy.sy;
+    const dd=Math.sqrt(dx*dx+dy*dy);
+
+    if(dd>maxR){
+      dx=dx/dd*maxR;
+      dy=dy/dd*maxR;
+    }
+
+    joy.dx=dx/maxR;
+    joy.dy=dy/maxR;
+    jthumb.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
+  },{passive:false});
+
+  window.addEventListener('touchend',e=>{
+    if(e.touches.length===0){
+      joy.on=false;
+      joy.dx=0;
+      joy.dy=0;
+      jthumb.style.transform='translate(-50%,-50%)';
+    }
+  });
+
+  const rb=document.getElementById('btn-run');
+  rb.addEventListener('mousedown',()=>setRunHeld(true));
+  rb.addEventListener('mouseup',()=>setRunHeld(false));
+  rb.addEventListener('touchstart',()=>setRunHeld(true),{passive:true});
+  rb.addEventListener('touchend',()=>setRunHeld(false));
+}

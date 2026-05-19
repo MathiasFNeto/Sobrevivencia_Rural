@@ -1,4 +1,5 @@
 import { chickenFrames, houseImg, playerSprites, zombieSprites } from "./assets.js";
+import { setupControls } from "./controls.js";
 import { listenAuthState, loadGameDocument, loginAnonymously, loginWithGoogle, logoutFirebase, saveGameDocument } from "./firebase-service.js";
 import { SAVE_VERSION, applySerializedWorld, deserializePoints, parseSavedJson, serializePoints, serializeWorld } from "./save-system.js";
 
@@ -3246,7 +3247,14 @@ function startGame(){
   startLoop();
 
   if(!window.controlsReady){
-    setupControls();
+    setupControls({
+      doAction: window.doAction,
+      handleHouseMarket,
+      isInHouse: ()=>inHouse,
+      joy,
+      keys,
+      setRunHeld: value=>{runHeld=value;}
+    });
     window.controlsReady = true;
   }
 
@@ -3467,38 +3475,6 @@ window.marketSell=function(id){
 // ══════════════════════════════════════
 // CONTROLS
 // ══════════════════════════════════════
-function setupControls(){
-  window.addEventListener('keydown',e=>{
-    if(inHouse){
-      handleHouseMarket(e.key);
-    }
-    keys[e.key]=true;
-    if(e.key===' ')runHeld=true;
-    if(e.key==='e'||e.key==='E')doAction('chop');
-  });
-  window.addEventListener('keyup',e=>{keys[e.key]=false;if(e.key===' ')runHeld=false;});
-
-  // joystick
-  const jbase=document.getElementById('joystick-base'),jthumb=document.getElementById('joystick-thumb'),maxR=28;
-  document.getElementById('joystick-zone').addEventListener('touchstart',e=>{
-    e.preventDefault();const rect=jbase.getBoundingClientRect();
-    joy.sx=rect.left+rect.width/2;joy.sy=rect.top+rect.height/2;joy.on=true;
-  },{passive:false});
-  window.addEventListener('touchmove',e=>{
-    if(!joy.on)return;e.preventDefault();
-    const t=e.touches[0];let dx=t.clientX-joy.sx,dy=t.clientY-joy.sy;
-    const dd=Math.sqrt(dx*dx+dy*dy);if(dd>maxR){dx=dx/dd*maxR;dy=dy/dd*maxR;}
-    joy.dx=dx/maxR;joy.dy=dy/maxR;
-    jthumb.style.transform=`translate(calc(-50% + ${dx}px),calc(-50% + ${dy}px))`;
-  },{passive:false});
-  window.addEventListener('touchend',e=>{
-    if(e.touches.length===0){joy.on=false;joy.dx=0;joy.dy=0;jthumb.style.transform='translate(-50%,-50%)';}
-  });
-  const rb=document.getElementById('btn-run');
-  rb.addEventListener('mousedown',()=>runHeld=true);rb.addEventListener('mouseup',()=>runHeld=false);
-  rb.addEventListener('touchstart',()=>runHeld=true,{passive:true});rb.addEventListener('touchend',()=>runHeld=false);
-}
-
 // ══════════════════════════════════════
 // CUSTOMIZATION
 // ══════════════════════════════════════
