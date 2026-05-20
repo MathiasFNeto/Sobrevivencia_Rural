@@ -543,8 +543,7 @@ function drawTileObject(type, sx, sy, cell) {
   }
     else if(type===FENCE_H){
 
-    ctx.fillStyle='#3a7a2a';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(G,sx,sy);
 
     ctx.fillStyle='#6f4322';
     ctx.fillRect(sx+6,sy+14,6,28);
@@ -557,8 +556,7 @@ function drawTileObject(type, sx, sy, cell) {
 
   else if(type===FENCE_L){
 
-    ctx.fillStyle='#3a7a2a';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(G,sx,sy);
 
     // poste vertical
     ctx.fillStyle='#7a431d';
@@ -588,8 +586,7 @@ function drawTileObject(type, sx, sy, cell) {
 
   else if(type===FENCE_R){
 
-    ctx.fillStyle='#3a7a2a';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(G,sx,sy);
 
     // poste vertical
     ctx.fillStyle='#7a431d';
@@ -619,8 +616,7 @@ function drawTileObject(type, sx, sy, cell) {
 
   else if(type===GATE){
 
-    ctx.fillStyle='#3a7a2a';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(G,sx,sy);
 
     // porteira aberta
     ctx.strokeStyle='#8b4a1f';
