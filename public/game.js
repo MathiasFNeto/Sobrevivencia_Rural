@@ -1455,7 +1455,7 @@ function drawWorld(){
       const sy=Math.round(r*TILE-camY);
 
 
-      if(cell.t!==G && cell.t!==DIRT){
+      if(cell.t!==G && cell.t!==DIRT && cell.t!==WATER && cell.t!==SAND && cell.t!==PATH){
         drawTileObject(cell.t,sx,sy,cell);
       }
 
