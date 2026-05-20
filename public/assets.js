@@ -45,7 +45,8 @@ export const objectSprites = {
   umbrella: loadImage('assets/sprites/objects/umbrella.png'),
   boat: loadImage('assets/sprites/objects/boat.png'),
   duckRight: loadImage('assets/sprites/objects/duck_right.png'),
-  duckLeft: loadImage('assets/sprites/objects/duck_left.png')
+  duckLeft: loadImage('assets/sprites/objects/duck_left.png'),
+  rock: loadImage('assets/sprites/objects/rock.png')
 };
 export const houseImg = loadImage('assets/sprites/house/house.png');
 export const chickenFrames = [

@@ -218,6 +218,8 @@ function drawTileObject(type, sx, sy, cell) {
       ctx.fill();
     });
   } else if (type===ROCK||type===MINE) {
+    if(type===ROCK && drawContainedImage(objectSprites.rock, cx, cy+2, 46, 34))return;
+
     ctx.fillStyle=type===MINE?'#6a5a7a':'#7a7a8a';
     ctx.beginPath();ctx.ellipse(cx,cy+2,15,11,0,0,Math.PI*2);ctx.fill();
     ctx.fillStyle=type===MINE?'#8a7a9a':'#9a9aaa';
