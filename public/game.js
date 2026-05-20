@@ -838,25 +838,21 @@ function generateWorld(){
     }
   }
 
-    // guarda-sóis espalhados na praia
-  for(let i=0;i<12;i++){
-    const r=5+Math.floor(Math.random()*(WH-10));
-    const c=7+Math.floor(Math.random()*3);
+  // objetos grandes da praia/mar ficam fixos para nao sobrepor
+  const beachObjects = [
+    {r:7, c:8, t:UMBRELLA},
+    {r:18, c:8, t:UMBRELLA},
+    {r:29, c:8, t:UMBRELLA},
+    {r:9, c:2, t:BOAT},
+    {r:21, c:3, t:BOAT},
+    {r:33, c:2, t:BOAT}
+  ];
 
-    if(world[r][c].t===SAND){
-      world[r][c]={t:UMBRELLA};
+  beachObjects.forEach(({r,c,t})=>{
+    if(world[r]?.[c]){
+      world[r][c]={t};
     }
-  }
-
-  // barquinhos espalhados no mar
-  for(let i=0;i<8;i++){
-    const r=5+Math.floor(Math.random()*(WH-10));
-    const c=1+Math.floor(Math.random()*5);
-
-    if(world[r][c].t===WATER){
-      world[r][c]={t:BOAT};
-    }
-  }
+  });
 
   // limpar as 4 primeiras linhas para as rochas
   for(let r=0; r<4; r++){
