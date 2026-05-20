@@ -1492,6 +1492,10 @@ function drawPlayer(){
       : playerSprites['adventurer_walk2.png'];
   }
 
+  if(player.dir==='up' && player.action===''){
+    sprite = playerSprites['adventurer_back.png'];
+  }
+
   if(player.action==='chop' || player.action==='mine'){
     const frame = Math.floor(Date.now()/120) % 2;
     sprite = frame === 0
@@ -1505,6 +1509,10 @@ function drawPlayer(){
     sprite = frame === 0
       ? playerSprites['adventurer_action1.png']
       : playerSprites['adventurer_action2.png'];
+  }
+
+  if(player.action==='hurt'){
+    sprite = playerSprites['adventurer_hurt.png'];
   }
 
   if(sprite && sprite.complete){
@@ -2044,12 +2052,14 @@ function updatePlayer(dt){
     dy+=joy.dy;
   }
 
-  if(dx < -0.1){
-    player.dir='left';
-  }
-
-  if(dx > 0.1){
-    player.dir='right';
+  if(Math.abs(dx) > 0.1 || Math.abs(dy) > 0.1){
+    if(Math.abs(dx) > Math.abs(dy)){
+      player.dir = dx < 0 ? 'left' : 'right';
+    }else if(dy < -0.1){
+      player.dir = 'up';
+    }else if(dy > 0.1){
+      player.dir = 'down';
+    }
   }
 
   if(player.tx!==null&&Math.abs(dx)<0.1&&!joy.on){
@@ -2522,6 +2532,8 @@ function updateEnemies(dt){
         e.actionTimer=18;
 
         hp=Math.max(0,hp-1);
+        player.action='hurt';
+        player.actionTimer=18;
         showMsg('-1 HP! Inimigo atacou!');
         e.atkT=0;
 

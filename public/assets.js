@@ -16,10 +16,12 @@ function loadSpriteMap(basePath, files){
 
 const playerSpriteFiles = [
   'adventurer_idle.png',
+  'adventurer_back.png',
   'adventurer_walk1.png',
   'adventurer_walk2.png',
   'adventurer_action1.png',
   'adventurer_action2.png',
+  'adventurer_hurt.png',
   'adventurer_kick.png'
 ];
 

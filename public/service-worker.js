@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sobrevivencia-rural-v12';
+const CACHE_NAME = 'sobrevivencia-rural-v13';
 
 const urlsToCache = [
   './',
@@ -22,10 +22,12 @@ const urlsToCache = [
   './assets/sprites/galinha/sprite_06.png',
   './assets/sprites/galinha/sprite_07.png',
   './assets/sprites/player/adventurer_idle.png',
+  './assets/sprites/player/adventurer_back.png',
   './assets/sprites/player/adventurer_walk1.png',
   './assets/sprites/player/adventurer_walk2.png',
   './assets/sprites/player/adventurer_action1.png',
   './assets/sprites/player/adventurer_action2.png',
+  './assets/sprites/player/adventurer_hurt.png',
   './assets/sprites/player/adventurer_kick.png',
   './assets/sprites/zombie/zombie_idle.png',
   './assets/sprites/zombie/zombie_walk1.png',
