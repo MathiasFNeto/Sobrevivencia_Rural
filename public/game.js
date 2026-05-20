@@ -1,4 +1,4 @@
-import { chickenFrames, houseImg, objectSprites, playerSprites, terrainTiles, zombieSprites } from "./assets.js";
+import { chickenFrames, dogSprites, houseImg, objectSprites, playerSprites, terrainTiles, zombieSprites } from "./assets.js";
 import { setupControls } from "./controls.js";
 import { listenAuthState, loadGameDocument, loginAnonymously, loginWithGoogle, logoutFirebase, saveGameDocument } from "./firebase-service.js";
 import { SAVE_VERSION, applySerializedWorld, deserializePoints, parseSavedJson, serializePoints, serializeWorld } from "./save-system.js";
@@ -1779,108 +1779,35 @@ function drawDog(){
 
   const sx = dog.x - camX;
   const sy = dog.y - camY;
+  const dir = dog.dir || 'right';
+  const W = 44, H = 44;
 
-  const t = Date.now() * 0.012;
-  const walk = dog.isWalking ? Math.sin(t) : 0;
+  let sprite;
+  const walkFrame = Math.floor(Date.now() / 160) % 3;
+
+  if(dog.isWalking){
+    if(dir === 'left')       sprite = dogSprites.walk_left[walkFrame];
+    else if(dir === 'right') sprite = dogSprites.walk_right[walkFrame];
+    else if(dir === 'up')    sprite = dogSprites.walk_up[walkFrame];
+    else                     sprite = dogSprites.walk_down[walkFrame];
+  } else if(dog.eatTimer > 3){
+    const eatFrame = Math.floor(Date.now() / 220) % 4;
+    sprite = dogSprites.eat[eatFrame];
+  } else {
+    sprite = (dir === 'left') ? dogSprites.idle_left : dogSprites.idle_right;
+  }
 
   ctx.save();
 
-  ctx.translate(sx, sy);
+  // sombra
+  ctx.fillStyle = 'rgba(0,0,0,0.20)';
+  ctx.beginPath();
+  ctx.ellipse(sx, sy + H * 0.35, W * 0.42, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
 
-  if(dog.dir === 'left'){
-    ctx.scale(-0.5, 0.5);
-  }else{
-    ctx.scale(0.5, 0.5);
+  if(sprite && sprite.complete && sprite.naturalWidth > 0){
+    ctx.drawImage(sprite, sx - W / 2, sy - H / 2, W, H);
   }
-
-  ctx.translate(-sx, -sy);
-
-  ctx.fillStyle='rgba(0,0,0,0.22)';
-  ctx.beginPath();
-  ctx.ellipse(sx, sy+18, 18, 6, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // pernas
-  ctx.strokeStyle='#8b5a36';
-  ctx.lineWidth=5;
-  ctx.lineCap='round';
-
-  ctx.beginPath();
-  ctx.moveTo(sx-10, sy+8);
-  ctx.lineTo(sx-13+walk*4, sy+23);
-
-  ctx.moveTo(sx+8, sy+8);
-  ctx.lineTo(sx+11-walk*4, sy+23);
-
-  ctx.moveTo(sx-2, sy+10);
-  ctx.lineTo(sx-4-walk*3, sy+24);
-
-  ctx.moveTo(sx+15, sy+8);
-  ctx.lineTo(sx+17+walk*3, sy+22);
-  ctx.stroke();
-
-  // corpo
-  ctx.fillStyle='#9b653a';
-  ctx.beginPath();
-  ctx.ellipse(sx+2, sy, 22, 15, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // peito branco
-  ctx.fillStyle='#f1e6d0';
-  ctx.beginPath();
-  ctx.ellipse(sx+8, sy+3, 9, 13, -0.2, 0, Math.PI*2);
-  ctx.fill();
-
-  // rabo
-  ctx.strokeStyle='#9b653a';
-  ctx.lineWidth=8;
-  ctx.lineCap='round';
-  ctx.beginPath();
-  ctx.arc(sx-22, sy-2, 12, Math.PI*0.9, Math.PI*1.8);
-  ctx.stroke();
-
-  // cabeça
-  ctx.fillStyle='#f1e6d0';
-  ctx.beginPath();
-  ctx.ellipse(sx+22, sy-15, 18, 17, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // orelhas
-  ctx.fillStyle='#5b3828';
-  ctx.beginPath();
-  ctx.ellipse(sx+10, sy-12, 8, 14, 0.4, 0, Math.PI*2);
-  ctx.ellipse(sx+34, sy-12, 8, 14, -0.4, 0, Math.PI*2);
-  ctx.fill();
-
-  // focinho
-  ctx.fillStyle='#ffffff';
-  ctx.beginPath();
-  ctx.ellipse(sx+22, sy-9, 10, 7, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle='#1d2b34';
-  ctx.beginPath();
-  ctx.arc(sx+22, sy-13, 3, 0, Math.PI*2);
-  ctx.fill();
-
-  // língua
-  ctx.fillStyle='#e85b5b';
-  ctx.beginPath();
-  ctx.ellipse(sx+22, sy-4, 4, 5, 0, 0, Math.PI*2);
-  ctx.fill();
-
-  // olhos
-  ctx.fillStyle='#23160f';
-  ctx.beginPath();
-  ctx.arc(sx+16, sy-19, 3, 0, Math.PI*2);
-  ctx.arc(sx+28, sy-19, 3, 0, Math.PI*2);
-  ctx.fill();
-
-  ctx.fillStyle='white';
-  ctx.beginPath();
-  ctx.arc(sx+17, sy-20, 1, 0, Math.PI*2);
-  ctx.arc(sx+29, sy-20, 1, 0, Math.PI*2);
-  ctx.fill();
 
   ctx.restore();
 }
@@ -2395,6 +2322,16 @@ function enemyCanMove(wx, wy, margin=8){
   return true;
 }
 
+function setDogDir(dx, dy){
+  if(Math.abs(dx) >= Math.abs(dy)){
+    if(dx < -0.1) dog.dir = 'left';
+    else if(dx > 0.1) dog.dir = 'right';
+  } else {
+    if(dy < -0.1) dog.dir = 'up';
+    else if(dy > 0.1) dog.dir = 'down';
+  }
+}
+
 function updateDog(dt){
   if(inHouse) return;
 
@@ -2402,23 +2339,19 @@ function updateDog(dt){
   const targetY = player.y + 28;
 
   const dx = targetX - dog.x;
-  if(dx < -0.1){
-    dog.dir='left';
-  }
-
-  if(dx > 0.1){
-    dog.dir='right';
-  }
   const dy = targetY - dog.y;
   const dist = Math.sqrt(dx*dx + dy*dy);
-  
 
   dog.isWalking = dist > 3;
 
   if(dist > 4){
+    setDogDir(dx, dy);
     dog.x += dx/dist * 2.8 * dt * 60;
     dog.y += dy/dist * 2.8 * dt * 60;
   }
+
+  dog.eatTimer = (dog.eatTimer || 0) + dt;
+  if(dog.isWalking) dog.eatTimer = 0;
 
   dog.barkCd = Math.max(0, dog.barkCd - dt);
   dog.atkCd = Math.max(0, dog.atkCd - dt);
@@ -2444,17 +2377,13 @@ function updateDog(dt){
     }
 
     if(nearestD > 35){
-      const dx = nearest.x - dog.x;
-      const dy = nearest.y - dog.y;
-      if(dx < -0.1){
-        dog.dir='left';
-      }
-
-      if(dx > 0.1){
-        dog.dir='right';
-      }
-      dog.x += dx/nearestD * 3.2 * dt * 60;
-      dog.y += dy/nearestD * 3.2 * dt * 60;
+      const edx = nearest.x - dog.x;
+      const edy = nearest.y - dog.y;
+      setDogDir(edx, edy);
+      dog.x += edx/nearestD * 3.2 * dt * 60;
+      dog.y += edy/nearestD * 3.2 * dt * 60;
+      dog.isWalking = true;
+      dog.eatTimer = 0;
     }
 
     if(nearestD < 42 && dog.atkCd <= 0){

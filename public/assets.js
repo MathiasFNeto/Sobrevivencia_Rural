@@ -49,6 +49,36 @@ export const objectSprites = {
   rock: loadImage('assets/sprites/objects/rock.png')
 };
 export const houseImg = loadImage('assets/sprites/house/house.png');
+export const dogSprites = {
+  walk_right: [
+    loadImage('assets/sprites/dog/walk_right_1.png'),
+    loadImage('assets/sprites/dog/walk_right_2.png'),
+    loadImage('assets/sprites/dog/walk_right_3.png')
+  ],
+  walk_left: [
+    loadImage('assets/sprites/dog/walk_left_1.png'),
+    loadImage('assets/sprites/dog/walk_left_2.png'),
+    loadImage('assets/sprites/dog/walk_left_3.png')
+  ],
+  walk_up: [
+    loadImage('assets/sprites/dog/walk_up_1.png'),
+    loadImage('assets/sprites/dog/walk_up_2.png'),
+    loadImage('assets/sprites/dog/walk_up_3.png')
+  ],
+  walk_down: [
+    loadImage('assets/sprites/dog/walk_down_1.png'),
+    loadImage('assets/sprites/dog/walk_down_2.png'),
+    loadImage('assets/sprites/dog/walk_down_3.png')
+  ],
+  idle_right: loadImage('assets/sprites/dog/idle_right.png'),
+  idle_left:  loadImage('assets/sprites/dog/idle_left.png'),
+  eat: [
+    loadImage('assets/sprites/dog/eat_1.png'),
+    loadImage('assets/sprites/dog/eat_2.png'),
+    loadImage('assets/sprites/dog/eat_3.png'),
+    loadImage('assets/sprites/dog/eat_4.png')
+  ]
+};
 export const chickenFrames = [
   loadImage('assets/sprites/galinha/sprite_04.png'),
   loadImage('assets/sprites/galinha/sprite_05.png'),
