@@ -753,6 +753,13 @@ function drawTileObject(type, sx, sy, cell) {
 
 let world=[], fixedTrees=[], fixedRocks=[], fixedWater=[];
 let growTimers={}, enemies=[], particles=[], arrows=[], ducks=[], chickens=[], cows=[];
+let towerList=[];
+function rebuildTowerList(){
+  towerList=[];
+  for(let r=0;r<WH;r++)for(let c=0;c<WW;c++){
+    if(world[r][c].t===TWR)towerList.push({r,c,x:c*TILE+TILE/2,y:r*TILE+TILE/2});
+  }
+}
 let day=1, phase='day', hp=MAX_HP, stamina=MAX_ST;
 const musicDay = document.getElementById('musicDay');
 const musicNight = document.getElementById('musicNight');
@@ -1111,6 +1118,8 @@ function createCampLayout(){
 
     });
   }
+
+  rebuildTowerList();
 }
 
 function isFarmArea(r,c){
@@ -2561,33 +2570,26 @@ function updateEnemies(dt){
 
     let hitS=false;
 
-    outer:
-    for(let r=0;r<WH;r++){
-      for(let c=0;c<WW;c++){
-        if(world[r][c].t!==TWR)continue;
+    for(const tw of towerList){
+      if(Math.sqrt((e.x-tw.x)**2+(e.y-tw.y)**2)<TILE*1.2){
+        if(e.atkT>1.5){
+          e.action='attack';
+          e.actionTimer=18;
 
-        const tx2=c*TILE+TILE/2;
-        const ty2=r*TILE+TILE/2;
+          world[tw.r][tw.c].hp=Math.max(0,(world[tw.r][tw.c].hp||0)-1);
+          e.atkT=0;
 
-        if(Math.sqrt((e.x-tx2)**2+(e.y-ty2)**2)<TILE*1.2){
-          if(e.atkT>1.5){
-            e.action='attack';
-            e.actionTimer=18;
+          spawnP(tw.x,tw.y,'💥',18);
 
-            world[r][c].hp=Math.max(0,(world[r][c].hp||0)-1);
-            e.atkT=0;
-
-            spawnP(tx2,ty2,'💥',18);
-
-            if(world[r][c].hp<=0){
-              world[r][c]={t:G};
-              showMsg('Estrutura destruida!');
-            }
+          if(world[tw.r][tw.c].hp<=0){
+            world[tw.r][tw.c]={t:G};
+            showMsg('Estrutura destruida!');
+            rebuildTowerList();
           }
-
-          hitS=true;
-          break outer;
         }
+
+        hitS=true;
+        break;
       }
     }
     if(!hitS){
@@ -2597,7 +2599,13 @@ function updateEnemies(dt){
       const pr=Math.floor(player.y/TILE);
       const pc=Math.floor(player.x/TILE);
 
-      const next=findNextStep(er,ec,pr,pc);
+      e.pathTimer=(e.pathTimer||0)-dt;
+      if(e.pathTimer<=0||e._pr!==pr||e._pc!==pc){
+        e.pathTimer=0.5;
+        e._pr=pr;e._pc=pc;
+        e.cachedStep=findNextStep(er,ec,pr,pc);
+      }
+      const next=e.cachedStep;
 
       if(next){
         const [nr,nc]=next;
@@ -2626,20 +2634,18 @@ function updateEnemies(dt){
     }
   }
   // towers shoot arrows
-  for(let r=0;r<WH;r++)for(let c=0;c<WW;c++){
-    if(world[r][c].t!==TWR)continue;
-    const cell=world[r][c];cell.st=(cell.st||0)+dt;
+  for(const tw of towerList){
+    const cell=world[tw.r][tw.c];cell.st=(cell.st||0)+dt;
     if(cell.st<2)continue;
-    const tx2=c*TILE+TILE/2,ty2=r*TILE+TILE/2;
     let target=null,minD=T_RANGE;
     enemies.forEach(e=>{
-      const d=Math.sqrt((e.x-tx2)**2+(e.y-ty2)**2);
+      const d=Math.sqrt((e.x-tw.x)**2+(e.y-tw.y)**2);
       if(d<minD){minD=d;target=e;}
     });
     if(target){
       cell.st=0;
-      const angle=Math.atan2(target.y-ty2,target.x-tx2);
-      arrows.push({x:tx2,y:ty2,angle,vx:Math.cos(angle)*6,vy:Math.sin(angle)*6,life:1.5,target});
+      const angle=Math.atan2(target.y-tw.y,target.x-tw.x);
+      arrows.push({x:tw.x,y:tw.y,angle,vx:Math.cos(angle)*6,vy:Math.sin(angle)*6,life:1.5,target});
     }
   }
   // move arrows
@@ -2686,10 +2692,12 @@ function updateSkyCycle(){
   const w=window.innerWidth;
   const h=260;
 
-  arc.width=w;
-  arc.height=h;
-  arc.style.width=w+'px';
-  arc.style.height=h+'px';
+  if(arc.width!==w||arc.height!==h){
+    arc.width=w;
+    arc.height=h;
+    arc.style.width=w+'px';
+    arc.style.height=h+'px';
+  }
 
   const c=arc.getContext('2d');
   c.clearRect(0,0,w,h);
@@ -3050,6 +3058,7 @@ function actionTower(){
   wood-=3;
   stone-=1;
   world[r][c]={t:TWR,hp:T_HP,st:0};
+  rebuildTowerList();
   showMsg('Torre construída!');
   updateHUD();
 }
@@ -3125,7 +3134,7 @@ function endNight(){
   if(day%5===0){
     let n=0;
     for(let r=0;r<WH;r++)for(let c=0;c<WW;c++){if(world[r][c].t===TWR){world[r][c].hp=Math.max(0,(world[r][c].hp||0)-2);if(world[r][c].hp<=0){world[r][c]={t:G};n++;}}}
-    if(n)showMsg(n+' torre(s) precisam de reparo!');
+    if(n){showMsg(n+' torre(s) precisam de reparo!');rebuildTowerList();}
   }
   if(day%10===0){respawn();showMsg('Recursos renasceram!');}
   syncPhaseUI();updateHUD();
