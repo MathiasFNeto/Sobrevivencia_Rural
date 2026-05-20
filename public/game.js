@@ -218,7 +218,7 @@ function drawTileObject(type, sx, sy, cell) {
       ctx.fill();
     });
   } else if (type===ROCK||type===MINE) {
-    if(type===ROCK && drawContainedImage(objectSprites.rock, cx, cy+2, 46, 34))return;
+    if(type===ROCK && drawContainedImage(objectSprites.rock, cx, cy+2, 58, 40))return;
 
     ctx.fillStyle=type===MINE?'#6a5a7a':'#7a7a8a';
     ctx.beginPath();ctx.ellipse(cx,cy+2,15,11,0,0,Math.PI*2);ctx.fill();
@@ -468,8 +468,12 @@ function drawTileObject(type, sx, sy, cell) {
 
     const p = cell?.rockPart;
 
-    ctx.fillStyle='#3a7a2a';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    if(p==='tl'){
+      drawGroundTile(G,sx,sy);
+      drawContainedImage(objectSprites.rock, sx + TILE, sy + TILE, TILE * 1.8, TILE * 1.15);
+    }
+
+    if(objectSprites.rock.complete && objectSprites.rock.naturalWidth)return;
 
     // sombra por parte
     ctx.fillStyle='rgba(0,0,0,0.18)';
