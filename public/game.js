@@ -657,7 +657,7 @@ function drawTileObject(type, sx, sy, cell) {
 
     drawGroundTile(SAND,sx,sy);
 
-    if(drawContainedImage(objectSprites.umbrella, cx, cy, 42, 42))return;
+    if(drawContainedImage(objectSprites.umbrella, cx, cy, 126, 126))return;
 
     ctx.strokeStyle='#8b5a2b';
     ctx.lineWidth=3;
@@ -693,7 +693,7 @@ function drawTileObject(type, sx, sy, cell) {
   else if(type===BOAT){
     drawGroundTile(WATER,sx,sy);
 
-    if(drawContainedImage(objectSprites.boat, cx, cy, 44, 38))return;
+    if(drawContainedImage(objectSprites.boat, cx, cy, 132, 114))return;
 
     ctx.fillStyle='#8b4a1f';
     ctx.beginPath();
