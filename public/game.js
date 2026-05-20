@@ -1,4 +1,4 @@
-import { chickenFrames, houseImg, playerSprites, zombieSprites } from "./assets.js";
+import { chickenFrames, houseImg, playerSprites, terrainTiles, zombieSprites } from "./assets.js";
 import { setupControls } from "./controls.js";
 import { listenAuthState, loadGameDocument, loginAnonymously, loginWithGoogle, logoutFirebase, saveGameDocument } from "./firebase-service.js";
 import { SAVE_VERSION, applySerializedWorld, deserializePoints, parseSavedJson, serializePoints, serializeWorld } from "./save-system.js";
@@ -121,15 +121,31 @@ const SOLID=new Set([TREE,ROCK,WATER,MINE,WELL,TWR,HOUSE,BIGROCK,FENCE,FENCE_H,F
 const TCLR={0:'#3a7a2a',1:'#7a5a2a',2:'#1a5a1a',3:'#5a5a6a',4:'#1a4a8a',5:'#4a3a5a',6:'#4a7a2a',7:'#3a8a1a',8:'#2aaa1a',9:'#2a5a9a',10:'#6a5a1a',11:'#6a4a1a',12:'#5a4a3a',13:'#3a2a1a',14:'#d8b36a',
 15:'#8b5a2b',16:'#d96a2a',17:'#a85a2a',18:'#b0b0b0',19:'#3a7a2a',20:'#d9c27a',21:'#3a7a2a',22:'#3a7a2a',23:'#3a7a2a',24:'#3a7a2a',27:'#d2a679'};
 
+function getGroundTile(type){
+  if(type===WATER)return terrainTiles.water;
+  if(type===DIRT || type===PATH || type===SAND || type===CS || type===CM || type===CR)return terrainTiles.dirt;
+  return terrainTiles.grass;
+}
+
+function drawGroundTile(type, sx, sy){
+  const img = getGroundTile(type);
+
+  if(img && img.complete){
+    ctx.drawImage(img, sx, sy, TILE, TILE);
+    return;
+  }
+
+  ctx.fillStyle = type===WATER ? TCLR[WATER] : (type===DIRT || type===PATH || type===SAND ? TCLR[DIRT] : TCLR[G]);
+  ctx.fillRect(sx, sy, TILE, TILE);
+}
+
 // Draw tile objects as canvas shapes instead of emoji (cross-platform)
 function drawTileObject(type, sx, sy, cell) {
   const cx = sx+TILE/2, cy = sy+TILE/2, h = TILE*0.7;
   ctx.save();
   if (type===TREE) {
 
-    // grama por baixo
-    ctx.fillStyle='#3a7a2a';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(G,sx,sy);
 
 
     // sombra
@@ -198,16 +214,13 @@ function drawTileObject(type, sx, sy, cell) {
     // sparkle for mine
     if(type===MINE){ctx.fillStyle='#d4aaff';ctx.font='10px serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('◆',cx+4,cy+3);}
   } else if (type===WATER) {
-    ctx.fillStyle='#1a6aaa';ctx.fillRect(sx,sy,TILE,TILE);
-    for(let w=0;w<3;w++){ctx.beginPath();ctx.ellipse(sx+8+w*14,cy,6,3,0,0,Math.PI*2);ctx.fill();}
+    drawGroundTile(WATER,sx,sy);
   } else if (type===STUMP) {
     ctx.fillStyle='#6B3A1F';ctx.beginPath();ctx.ellipse(cx,cy,10,7,0,0,Math.PI*2);ctx.fill();
     ctx.fillStyle='#8B5A2F';ctx.beginPath();ctx.arc(cx,cy,6,0,Math.PI*2);ctx.fill();
   } else if(type===CS){
 
-    // terra
-    ctx.fillStyle='#6b4a24';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(DIRT,sx,sy);
 
     // broto
     ctx.strokeStyle='#7ed957';
@@ -227,9 +240,7 @@ function drawTileObject(type, sx, sy, cell) {
 
   } else if(type===CM){
 
-    // terra
-    ctx.fillStyle='#6b4a24';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(DIRT,sx,sy);
 
     // caule
     ctx.strokeStyle='#4f9f2f';
@@ -261,9 +272,7 @@ function drawTileObject(type, sx, sy, cell) {
 
   } else if(type===CR){
 
-    // terra
-    ctx.fillStyle='#6b4a24';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(DIRT,sx,sy);
 
     // caule principal
     ctx.strokeStyle='#4a9a2a';
@@ -1429,22 +1438,7 @@ function drawWorld(){
       const sx=Math.round(c*TILE-camX);
       const sy=Math.round(r*TILE-camY);
 
-      ctx.fillStyle='#3a7a2a';
-      ctx.fillRect(sx,sy,TILE,TILE);
-
-      if(
-        cell.t!==G &&
-        cell.t!==FENCE &&
-        cell.t!==FIRE &&
-        cell.t!==TWR &&
-        cell.t!==HOUSE &&
-        cell.t!==HDOOR &&
-        cell.t!==SIGN &&
-        !cell.part
-      ){
-        ctx.fillStyle=TCLR[cell.t]||TCLR[0];
-        ctx.fillRect(sx,sy,TILE,TILE);
-      }
+      drawGroundTile(cell.t,sx,sy);
     }
   }
 

@@ -36,6 +36,11 @@ const zombieSpriteFiles = [
 
 export const playerSprites = loadSpriteMap('assets/sprites/player', playerSpriteFiles);
 export const zombieSprites = loadSpriteMap('assets/sprites/zombie', zombieSpriteFiles);
+export const terrainTiles = {
+  grass: loadImage('assets/sprites/terrain/grass.png'),
+  dirt: loadImage('assets/sprites/terrain/dirt.png'),
+  water: loadImage('assets/sprites/terrain/water.png')
+};
 export const houseImg = loadImage('assets/sprites/house/house.png');
 export const chickenFrames = [
   loadImage('assets/sprites/galinha/sprite_04.png'),
