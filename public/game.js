@@ -1484,7 +1484,6 @@ function drawPlayer(){
   if(inHouse)return;
 
   let sprite = playerSprites['adventurer_idle.png'];
-  let stepBob = 0;
 
   if(player.isWalking){
     const frame = Math.floor(Date.now()/180) % 2;
@@ -1494,10 +1493,7 @@ function drawPlayer(){
   }
 
   if(player.dir==='up' && player.action===''){
-    sprite = playerSprites['adventurer_back.png'];
-    if(player.isWalking){
-      stepBob = Math.floor(Date.now()/140) % 2 === 0 ? -2 : 2;
-    }
+    sprite = player.isWalking ? sprite : playerSprites['adventurer_back.png'];
   }
 
   if(player.action==='chop' || player.action==='mine'){
@@ -1521,7 +1517,7 @@ function drawPlayer(){
 
   if(sprite && sprite.complete){
     const sx = player.x - camX;
-    const sy = player.y - camY + stepBob;
+    const sy = player.y - camY;
     const w = 48;
     const h = 58;
 
