@@ -1496,7 +1496,7 @@ function drawPlayer(){
   if(player.dir==='up' && player.action===''){
     sprite = playerSprites['adventurer_back.png'];
     if(player.isWalking){
-      stepBob = Math.floor(Date.now()/140) % 2 === 0 ? -1 : 1;
+      stepBob = Math.floor(Date.now()/140) % 2 === 0 ? -2 : 2;
     }
   }
 
