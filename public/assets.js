@@ -41,6 +41,12 @@ export const terrainTiles = {
   dirt: loadImage('assets/sprites/terrain/dirt.png'),
   water: loadImage('assets/sprites/terrain/water.png')
 };
+export const objectSprites = {
+  umbrella: loadImage('assets/sprites/objects/umbrella.png'),
+  boat: loadImage('assets/sprites/objects/boat.png'),
+  duckRight: loadImage('assets/sprites/objects/duck_right.png'),
+  duckLeft: loadImage('assets/sprites/objects/duck_left.png')
+};
 export const houseImg = loadImage('assets/sprites/house/house.png');
 export const chickenFrames = [
   loadImage('assets/sprites/galinha/sprite_04.png'),

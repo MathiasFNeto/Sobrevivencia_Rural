@@ -1,4 +1,4 @@
-import { chickenFrames, houseImg, playerSprites, terrainTiles, zombieSprites } from "./assets.js";
+import { chickenFrames, houseImg, objectSprites, playerSprites, terrainTiles, zombieSprites } from "./assets.js";
 import { setupControls } from "./controls.js";
 import { listenAuthState, loadGameDocument, loginAnonymously, loginWithGoogle, logoutFirebase, saveGameDocument } from "./firebase-service.js";
 import { SAVE_VERSION, applySerializedWorld, deserializePoints, parseSavedJson, serializePoints, serializeWorld } from "./save-system.js";
@@ -137,6 +137,17 @@ function drawGroundTile(type, sx, sy){
 
   ctx.fillStyle = type===WATER ? TCLR[WATER] : (type===DIRT || type===PATH || type===SAND ? TCLR[DIRT] : TCLR[G]);
   ctx.fillRect(sx, sy, TILE, TILE);
+}
+
+function drawContainedImage(img, cx, cy, maxW, maxH){
+  if(!img || !img.complete || !img.naturalWidth || !img.naturalHeight)return false;
+
+  const scale = Math.min(maxW / img.naturalWidth, maxH / img.naturalHeight);
+  const w = img.naturalWidth * scale;
+  const h = img.naturalHeight * scale;
+
+  ctx.drawImage(img, cx - w/2, cy - h/2, w, h);
+  return true;
 }
 
 // Draw tile objects as canvas shapes instead of emoji (cross-platform)
@@ -644,8 +655,9 @@ function drawTileObject(type, sx, sy, cell) {
   }
   else if(type===UMBRELLA){
 
-    ctx.fillStyle='#d9c27a';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(SAND,sx,sy);
+
+    if(drawContainedImage(objectSprites.umbrella, cx, cy, 42, 42))return;
 
     ctx.strokeStyle='#8b5a2b';
     ctx.lineWidth=3;
@@ -679,8 +691,9 @@ function drawTileObject(type, sx, sy, cell) {
   }
 
   else if(type===BOAT){
-    ctx.fillStyle='#1a6aaa';
-    ctx.fillRect(sx,sy,TILE,TILE);
+    drawGroundTile(WATER,sx,sy);
+
+    if(drawContainedImage(objectSprites.boat, cx, cy, 44, 38))return;
 
     ctx.fillStyle='#8b4a1f';
     ctx.beginPath();
@@ -921,7 +934,7 @@ function generateWorld(){
       x:window.lakeBounds.x + 40 + Math.random() * (window.lakeBounds.w - 80),
       y:window.lakeBounds.y + 40 + Math.random() * (window.lakeBounds.h - 80),
       dir:Math.random()*Math.PI*2,
-      speed:0.3 + Math.random()*0.2,
+      speed:0.12 + Math.random()*0.08,
       timer:0
     });
   }
@@ -1714,11 +1727,16 @@ function drawDucks(){
   for(const d of ducks){
     const sx=d.x-camX;
     const sy=d.y-camY;
+    const sprite = Math.cos(d.dir) >= 0
+      ? objectSprites.duckRight
+      : objectSprites.duckLeft;
 
     ctx.fillStyle='rgba(0,0,0,0.18)';
     ctx.beginPath();
     ctx.ellipse(sx,sy+5,8,3,0,0,Math.PI*2);
     ctx.fill();
+
+    if(drawContainedImage(sprite, sx, sy-1, 30, 30))continue;
 
     ctx.fillStyle='#ffd93b';
     ctx.beginPath();
