@@ -837,9 +837,21 @@ function generateWorld(){
 
       // árvores aleatórias
       const d=Math.random();
-      if(d<0.11){
+      if(r>=4 && d<0.11){
         world[r][c]={t:TREE};
         fixedTrees.push([r,c]);
+      }
+    }
+  }
+
+  // manter a faixa superior com praia/mar, sem parede de pedras
+  for(let r=0; r<4; r++){
+    for(let c=0; c<WW; c++){
+      if(r<2){
+        world[r][c]={t:WATER};
+        if(c>=7)fixedWater.push([r,c]);
+      }else {
+        world[r][c]={t:SAND};
       }
     }
   }
@@ -859,33 +871,6 @@ function generateWorld(){
       world[r][c]={t};
     }
   });
-
-  // limpar as 4 primeiras linhas para as rochas
-  for(let r=0; r<4; r++){
-    for(let c=0; c<WW; c++){
-      world[r][c]={t:G};
-    }
-  }
-
-  // pedras 2x2 na primeira e segunda linha
-  for(let c=0; c<WW-1; c+=2){
-    world[0][c]   ={t:BIGROCK,rockPart:'tl'};
-    world[0][c+1] ={t:BIGROCK,rockPart:'tr'};
-    world[1][c]   ={t:BIGROCK,rockPart:'bl'};
-    world[1][c+1] ={t:BIGROCK,rockPart:'br'};
-
-    fixedRocks.push([0,c]);
-  }
-
-  // pedras 2x2 intercaladas na terceira e quarta linha
-  for(let c=1; c<WW-1; c+=2){
-    world[2][c]   ={t:BIGROCK,rockPart:'tl'};
-    world[2][c+1] ={t:BIGROCK,rockPart:'tr'};
-    world[3][c]   ={t:BIGROCK,rockPart:'bl'};
-    world[3][c+1] ={t:BIGROCK,rockPart:'br'};
-
-    fixedRocks.push([2,c]);
-  }
 
   const cr=Math.floor(WH/2);
   const cc=Math.floor(WW/2);
@@ -967,6 +952,22 @@ function generateWorld(){
   inHouse=false;
 
   createCampLayout();
+
+  // pedras espalhadas pelo mapa, em menor quantidade que as arvores
+  const rockTarget = Math.floor(fixedTrees.length / 2);
+  let rockAttempts = 0;
+
+  while(fixedRocks.length < rockTarget && rockAttempts < rockTarget * 30){
+    rockAttempts++;
+
+    const r = 4 + Math.floor(Math.random() * (WH - 4));
+    const c = 10 + Math.floor(Math.random() * (WW - 10));
+
+    if(world[r]?.[c]?.t === G){
+      world[r][c]={t:ROCK};
+      fixedRocks.push([r,c]);
+    }
+  }
 }
 
 function createCampLayout(){
