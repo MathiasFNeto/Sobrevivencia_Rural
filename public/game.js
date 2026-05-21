@@ -47,6 +47,7 @@ function applySaveData(d){
   Object.assign(APPEARANCE,parseSavedJson(d.ap, {}));
   createCampLayout();
   normalizeSeaAndUpperMeadow();
+  restoreBeachStrip();
   placeSeaObjects();
   carveRiverToSea();
 
@@ -120,6 +121,7 @@ const MAX_INV = 30;
 const PLAYER_RANGE = 5 * TILE;
 const SEA_WIDTH = 7;
 const RIVER_TOP_ROW = 5;
+const BEACH_WIDTH = 3;
 
 const G=0,DIRT=1,TREE=2,ROCK=3,WATER=4,MINE=5,CS=6,CM=7,CR=8,WELL=9,TWR=10,STUMP=11,HOUSE=12,HDOOR=13,PATH=14,FENCE=15,FIRE=16,BARN=17,SILO=18,BIGROCK=19,SAND=20,FENCE_H=21,FENCE_L=22,FENCE_R=23,GATE=24,UMBRELLA=25,BOAT=26,SIGN=27,RIVER_TOP=28,RIVER_WATER=29,RIVER_BOTTOM=30;
 const SOLID=new Set([TREE,ROCK,WATER,RIVER_TOP,RIVER_WATER,RIVER_BOTTOM,MINE,WELL,TWR,HOUSE,BIGROCK,FENCE,FENCE_H,FENCE_L,FENCE_R]);
@@ -828,9 +830,11 @@ function normalizeSeaAndUpperMeadow(){
       world[r][c]={t:WATER};
     }
 
-    for(let c=SEA_WIDTH;c<10;c++){
-      if(world[r]?.[c]?.t===SAND || world[r]?.[c]?.t===UMBRELLA){
-        world[r][c]={t:G};
+    if(r<RIVER_TOP_ROW){
+      for(let c=SEA_WIDTH;c<SEA_WIDTH+BEACH_WIDTH;c++){
+        if(world[r]?.[c]?.t===SAND || world[r]?.[c]?.t===UMBRELLA){
+          world[r][c]={t:G};
+        }
       }
     }
   }
@@ -844,8 +848,20 @@ function normalizeSeaAndUpperMeadow(){
   }
 }
 
+function restoreBeachStrip(){
+  const beachStartR = RIVER_TOP_ROW + 4;
+
+  for(let r=beachStartR;r<WH;r++){
+    for(let c=SEA_WIDTH;c<SEA_WIDTH+BEACH_WIDTH;c++){
+      world[r][c]={t:SAND};
+    }
+  }
+}
+
 function placeSeaObjects(){
   const seaObjects = [
+    {r:18, c:8, t:UMBRELLA},
+    {r:29, c:8, t:UMBRELLA},
     {r:9, c:2, t:BOAT},
     {r:21, c:3, t:BOAT},
     {r:33, c:2, t:BOAT}
@@ -908,6 +924,7 @@ function generateWorld(){
   }
 
   normalizeSeaAndUpperMeadow();
+  restoreBeachStrip();
   placeSeaObjects();
   carveRiverToSea();
 
