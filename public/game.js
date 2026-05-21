@@ -1,4 +1,4 @@
-import { chickenFrames, dogSprites, houseImg, objectSprites, playerSprites, terrainTiles, zombieSprites } from "./assets.js";
+import { animalSprites, buildingSprites, chickenFrames, dogSprites, houseImg, objectSprites, playerSprites, terrainTiles, zombieSprites } from "./assets.js";
 import { setupControls } from "./controls.js";
 import { listenAuthState, loadGameDocument, loginAnonymously, loginWithGoogle, logoutFirebase, saveGameDocument } from "./firebase-service.js";
 import { SAVE_VERSION, applySerializedWorld, deserializePoints, parseSavedJson, serializePoints, serializeWorld } from "./save-system.js";
@@ -15,6 +15,7 @@ function buildSaveData(){
     day, phase, hp, stamina, food, water, wood, stone, money, eggs, milk,
     chickenCount: chickens.length,
     cowCount: cows.length,
+    pigCount: pigs.length,
     wd: serializeWorld(world),
     ft: serializePoints(fixedTrees),
     fr: serializePoints(fixedRocks),
@@ -53,9 +54,11 @@ function applySaveData(d){
 
   const savedChickens = d.chickenCount ?? 2;
   const savedCows = d.cowCount ?? 2;
+  const savedPigs = d.pigCount ?? 3;
 
   while(chickens.length < savedChickens) addChicken();
   while(cows.length < savedCows) addCow();
+  while(pigs.length < savedPigs) addPig();
 }
 
 window.saveGame = async () => {
@@ -123,8 +126,8 @@ const SEA_WIDTH = 7;
 const RIVER_TOP_ROW = 5;
 const BEACH_WIDTH = 3;
 
-const G=0,DIRT=1,TREE=2,ROCK=3,WATER=4,MINE=5,CS=6,CM=7,CR=8,WELL=9,TWR=10,STUMP=11,HOUSE=12,HDOOR=13,PATH=14,FENCE=15,FIRE=16,BARN=17,SILO=18,BIGROCK=19,SAND=20,FENCE_H=21,FENCE_L=22,FENCE_R=23,GATE=24,UMBRELLA=25,BOAT=26,SIGN=27,RIVER_TOP=28,RIVER_WATER=29,RIVER_BOTTOM=30;
-const SOLID=new Set([TREE,ROCK,WATER,RIVER_TOP,RIVER_WATER,RIVER_BOTTOM,MINE,WELL,TWR,HOUSE,BIGROCK,FENCE,FENCE_H,FENCE_L,FENCE_R]);
+const G=0,DIRT=1,TREE=2,ROCK=3,WATER=4,MINE=5,CS=6,CM=7,CR=8,WELL=9,TWR=10,STUMP=11,HOUSE=12,HDOOR=13,PATH=14,FENCE=15,FIRE=16,BARN=17,SILO=18,BIGROCK=19,SAND=20,FENCE_H=21,FENCE_L=22,FENCE_R=23,GATE=24,UMBRELLA=25,BOAT=26,SIGN=27,RIVER_TOP=28,RIVER_WATER=29,RIVER_BOTTOM=30,MARKET=31;
+const SOLID=new Set([TREE,ROCK,WATER,RIVER_TOP,RIVER_WATER,RIVER_BOTTOM,MINE,WELL,TWR,HOUSE,BARN,MARKET,BIGROCK,FENCE,FENCE_H,FENCE_L,FENCE_R]);
 const TCLR={0:'#3a7a2a',1:'#7a5a2a',2:'#1a5a1a',3:'#5a5a6a',4:'#1a4a8a',5:'#4a3a5a',6:'#4a7a2a',7:'#3a8a1a',8:'#2aaa1a',9:'#2a5a9a',10:'#6a5a1a',11:'#6a4a1a',12:'#5a4a3a',13:'#3a2a1a',14:'#d8b36a',
 15:'#8b5a2b',16:'#d96a2a',17:'#a85a2a',18:'#b0b0b0',19:'#3a7a2a',20:'#d9c27a',21:'#3a7a2a',22:'#3a7a2a',23:'#3a7a2a',24:'#3a7a2a',27:'#d2a679'};
 
@@ -474,6 +477,25 @@ function drawTileObject(type, sx, sy, cell) {
       );
     }
 
+  } else if(type===MARKET || type===BARN){
+
+    if(!cell?.main) return;
+
+    const img = type===MARKET ? buildingSprites.market : buildingSprites.barn;
+    const w = (cell.w || 4) * TILE;
+    const h = (cell.h || 3) * TILE;
+
+    if(img?.complete && img.naturalWidth){
+      ctx.drawImage(img, sx, sy, w, h);
+    }else{
+      drawGroundTile(G,sx,sy);
+      ctx.fillStyle = type===MARKET ? '#b76b3b' : '#a8432b';
+      ctx.fillRect(sx, sy, w, h);
+      ctx.strokeStyle = '#392010';
+      ctx.lineWidth = 3;
+      ctx.strokeRect(sx+2, sy+2, w-4, h-4);
+    }
+
   } else if(type===BIGROCK){
 
     const p = cell?.rockPart;
@@ -762,7 +784,7 @@ function drawTileObject(type, sx, sy, cell) {
 }
 
 let world=[], fixedTrees=[], fixedRocks=[], fixedWater=[];
-let growTimers={}, enemies=[], particles=[], arrows=[], ducks=[], chickens=[], cows=[];
+let growTimers={}, enemies=[], particles=[], arrows=[], ducks=[], chickens=[], cows=[], pigs=[];
 let towerList=[];
 function rebuildTowerList(){
   towerList=[];
@@ -1026,7 +1048,142 @@ function generateWorld(){
   }
 }
 
+function getFarmLayout(){
+  return {
+    roadCol: 10,
+    topRoadR: 16,
+    mainRoadR: 25,
+    centerRoadC: 26,
+    house: {r:11, c:16, w:3, h:3},
+    market: {r:11, c:25, w:5, h:3},
+    coop: {r:19, c:16, w:6, h:5, gate:'bottom', gateOffset:2},
+    cowPen: {r:19, c:25, w:7, h:5, gate:'bottom', gateOffset:3},
+    barn: {r:19, c:40, w:4, h:4},
+    crops: {r:30, c:16, w:6, h:5, gate:'top', gateOffset:2},
+    pigPen: {r:30, c:25, w:7, h:5, gate:'top', gateOffset:3}
+  };
+}
+
+function fillTiles(r1,c1,r2,c2,type){
+  for(let r=r1;r<=r2;r++){
+    for(let c=c1;c<=c2;c++){
+      if(world[r]?.[c]) world[r][c]={t:type};
+    }
+  }
+}
+
+function placeFenceArea(area, floorType=G){
+  fillTiles(area.r, area.c, area.r+area.h-1, area.c+area.w-1, floorType);
+
+  for(let c=area.c;c<area.c+area.w;c++){
+    world[area.r-1][c]={t:FENCE_H};
+    world[area.r+area.h][c]={t:FENCE_H};
+  }
+
+  for(let r=area.r;r<area.r+area.h;r++){
+    world[r][area.c-1]={t:FENCE_L};
+    world[r][area.c+area.w]={t:FENCE_R};
+  }
+
+  const gateOffset = area.gateOffset ?? Math.floor(area.w/2);
+  if(area.gate==='top') world[area.r-1][area.c+gateOffset]={t:GATE};
+  else world[area.r+area.h][area.c+gateOffset]={t:GATE};
+}
+
+function placeBuilding(area, type){
+  for(let r=area.r;r<area.r+area.h;r++){
+    for(let c=area.c;c<area.c+area.w;c++){
+      world[r][c]={t:type, part:true};
+    }
+  }
+
+  world[area.r][area.c]={t:type, main:true, w:area.w, h:area.h};
+}
+
+function spawnDucksInRiver(){
+  ducks=[];
+  const minX=(SEA_WIDTH+2)*TILE;
+  const maxX=(WW-2)*TILE;
+  const minY=(RIVER_TOP_ROW+1)*TILE+10;
+  const maxY=(RIVER_TOP_ROW+3)*TILE-10;
+
+  for(let i=0;i<3;i++){
+    ducks.push({
+      x:minX + Math.random() * (maxX - minX),
+      y:minY + Math.random() * (maxY - minY),
+      dir:Math.random()*Math.PI*2,
+      speed:0.12 + Math.random()*0.08,
+      timer:0
+    });
+  }
+}
+
+function createNewCampLayout(){
+  const layout = getFarmLayout();
+
+  fillTiles(9, SEA_WIDTH, 38, 46, G);
+  fixedTrees = fixedTrees.filter(([r,c])=>!(r>=9 && r<=38 && c>=SEA_WIDTH && c<=46));
+  fixedRocks = fixedRocks.filter(([r,c])=>!(r>=9 && r<=38 && c>=SEA_WIDTH && c<=46));
+  restoreBeachStrip();
+  placeSeaObjects();
+  carveRiverToSea();
+
+  for(let r=RIVER_TOP_ROW+4;r<=38;r++) world[r][layout.roadCol]={t:PATH};
+  for(let c=layout.roadCol;c<=layout.barn.c+layout.barn.w-1;c++) world[layout.mainRoadR][c]={t:PATH};
+  for(let c=layout.house.c-1;c<=layout.market.c+layout.market.w;c++) world[layout.topRoadR][c]={t:PATH};
+  for(let r=layout.topRoadR;r<=38;r++) world[r][layout.centerRoadC]={t:PATH};
+
+  const h=layout.house;
+  for(let r=h.r; r<h.r+h.h; r++){
+    for(let c=h.c; c<h.c+h.w; c++){
+      world[r][c]={t:HOUSE,part:true,hp:H_HP};
+    }
+  }
+
+  world[h.r][h.c]={t:HOUSE,housePart:'roofL'};
+  world[h.r][h.c+1]={t:HOUSE,housePart:'roofC'};
+  world[h.r][h.c+2]={t:HOUSE,housePart:'roofR'};
+  world[h.r+1][h.c]={t:HOUSE,housePart:'wallL'};
+  world[h.r+1][h.c+1]={t:HOUSE,housePart:'wallC'};
+  world[h.r+1][h.c+2]={t:HOUSE,housePart:'wallR'};
+  world[h.r+2][h.c]={t:HOUSE,housePart:'baseL'};
+  world[h.r+2][h.c+1]={t:HOUSE,housePart:'door'};
+  world[h.r+2][h.c+2]={t:HOUSE,housePart:'baseR'};
+
+  placeBuilding(layout.market, MARKET);
+  placeBuilding(layout.barn, BARN);
+  placeFenceArea(layout.coop, DIRT);
+  placeFenceArea(layout.cowPen, G);
+  placeFenceArea(layout.crops, G);
+  placeFenceArea(layout.pigPen, DIRT);
+
+  for(let r=layout.crops.r;r<layout.crops.r+layout.crops.h;r++){
+    for(let c=layout.crops.c;c<layout.crops.c+layout.crops.w;c++){
+      world[r][c]={t:CR,pd:day};
+    }
+  }
+
+  chickens=[];
+  cows=[];
+  pigs=[];
+
+  for(let i=0;i<2;i++) addChicken();
+  addCow('cow');
+  addCow('bull');
+  for(let i=0;i<3;i++) addPig();
+  spawnDucksInRiver();
+
+  player.x=layout.centerRoadC*TILE+TILE/2;
+  player.y=layout.mainRoadR*TILE+TILE/2;
+  dog.x = player.x - 35;
+  dog.y = player.y + 30;
+
+  rebuildTowerList();
+}
+
 function createCampLayout(){
+  createNewCampLayout();
+  return;
   const cr=Math.floor(WH/2);
   const cc=Math.floor(WW/2);
 
@@ -1172,14 +1329,13 @@ function createCampLayout(){
 }
 
 function isFarmArea(r,c){
-  const cr=Math.floor(WH/2);
-  const cc=Math.floor(WW/2);
+  const crops = getFarmLayout().crops;
 
   return (
-    r>=cr+2 &&
-    r<=cr+6 &&
-    c>=cc-10 &&
-    c<=cc-5
+    r>=crops.r &&
+    r<crops.r+crops.h &&
+    c>=crops.c &&
+    c<crops.c+crops.w
   );
 }
 
@@ -1610,7 +1766,55 @@ function drawScytheSwing(){
   ctx.restore();
 }
 
+function getAnimalDirectionName(dir){
+  const ax=Math.abs(Math.cos(dir));
+  const ay=Math.abs(Math.sin(dir));
+
+  if(ax>ay) return Math.cos(dir)>=0 ? 'right' : 'left';
+  return Math.sin(dir)>=0 ? 'down' : 'up';
+}
+
+function drawAnimalSprite(animal){
+  const kind = animal.kind || 'cow';
+  const sprites = animalSprites[kind];
+  const dirName = getAnimalDirectionName(animal.dir || 0);
+  const frame = Math.floor(Date.now()/160) % 4 + 1;
+  const img = sprites?.[`walk_${dirName}_${frame}.png`] || sprites?.[`walk_down_${frame}.png`];
+  const sx=animal.x-camX;
+  const sy=animal.y-camY;
+  const size = kind === 'pig' ? 44 : 58;
+
+  ctx.fillStyle='rgba(0,0,0,0.2)';
+  ctx.beginPath();
+  ctx.ellipse(sx, sy+size*0.28, size*0.34, size*0.11, 0, 0, Math.PI*2);
+  ctx.fill();
+
+  if(img?.complete && img.naturalWidth){
+    ctx.drawImage(img, sx-size/2, sy-size*0.72, size, size);
+    return true;
+  }
+
+  return false;
+}
+
+function drawAnimalGroup(group){
+  for(const animal of group){
+    if(!drawAnimalSprite(animal)){
+      const sx=animal.x-camX;
+      const sy=animal.y-camY;
+      ctx.fillStyle=animal.kind==='pig' ? '#d88a91' : '#fff5df';
+      ctx.beginPath();
+      ctx.ellipse(sx, sy, 20, 13, 0, 0, Math.PI*2);
+      ctx.fill();
+    }
+  }
+}
+
 function drawCows(){
+  drawAnimalGroup(cows);
+  drawAnimalGroup(pigs);
+  return;
+
   for(const cow of cows){
     const sx=cow.x-camX;
     const sy=cow.y-camY;
@@ -2156,15 +2360,11 @@ function updateCamera(){
 }
 
 function addChicken(){
-  const cr=Math.floor(WH/2);
-  const cc=Math.floor(WW/2);
-
-  const coopR = cr - 7;
-  const coopC = cc - 10;
+  const coop = getFarmLayout().coop;
 
   chickens.push({
-    x: coopC*TILE + TILE,
-    y: coopR*TILE + TILE,
+    x:(coop.c+1+Math.random()*(coop.w-2))*TILE,
+    y:(coop.r+1+Math.random()*(coop.h-2))*TILE,
     
     dir: Math.random() < 0.5 ? -1 : 1,
 
@@ -2174,30 +2374,40 @@ function addChicken(){
   });
 }
 
-function addCow(){
-  const cr=Math.floor(WH/2);
-  const cc=Math.floor(WW/2);
-
-  const cowR = cr + 5;
-  const cowC = cc + 5;
+function addCow(kind){
+  const cowPen = getFarmLayout().cowPen;
+  const animalKind = kind || (cows.length % 3 === 1 ? 'bull' : 'cow');
 
   cows.push({
-    x:(cowC+1+Math.random()*5)*TILE,
-    y:(cowR+1+Math.random()*2)*TILE,
+    kind: animalKind,
+    x:(cowPen.c+1+Math.random()*(cowPen.w-2))*TILE,
+    y:(cowPen.r+1+Math.random()*(cowPen.h-2))*TILE,
     dir:Math.random()*Math.PI*2,
     speed:0.22+Math.random()*0.08,
     timer:0
   });
 }
 
-function updateCows(){
-  const cr=Math.floor(WH/2);
-  const cc=Math.floor(WW/2);
+function addPig(){
+  const pigPen = getFarmLayout().pigPen;
 
-  const cowR = cr + 5;
-  const cowC = cc + 5;
+  pigs.push({
+    kind:'pig',
+    x:(pigPen.c+1+Math.random()*(pigPen.w-2))*TILE,
+    y:(pigPen.r+1+Math.random()*(pigPen.h-2))*TILE,
+    dir:Math.random()*Math.PI*2,
+    speed:0.18+Math.random()*0.07,
+    timer:0
+  });
+}
 
-  for(const cow of cows){
+function updateAnimalGroup(group, area){
+  const minX=area.c*TILE+16;
+  const maxX=(area.c+area.w)*TILE-16;
+  const minY=area.r*TILE+16;
+  const maxY=(area.r+area.h)*TILE-16;
+
+  for(const cow of group){
     cow.timer--;
 
     if(cow.timer<=0){
@@ -2208,11 +2418,6 @@ function updateCows(){
     const nx=cow.x+Math.cos(cow.dir)*cow.speed;
     const ny=cow.y+Math.sin(cow.dir)*cow.speed;
 
-    const minX=cowC*TILE+16;
-    const maxX=(cowC+7)*TILE+24;
-    const minY=cowR*TILE+16;
-    const maxY=(cowR+4)*TILE+24;
-
     if(nx>minX && nx<maxX) cow.x=nx;
     else cow.dir=Math.PI-cow.dir;
 
@@ -2221,19 +2426,20 @@ function updateCows(){
   }
 }
 
+function updateCows(){
+  const layout = getFarmLayout();
+  updateAnimalGroup(cows, layout.cowPen);
+  updateAnimalGroup(pigs, layout.pigPen);
+}
+
 function updateChickens(dt){
+  const coop = getFarmLayout().coop;
 
-  const cr=Math.floor(WH/2);
-  const cc=Math.floor(WW/2);
+  const minX = coop.c*TILE + 12;
+  const maxX = (coop.c+coop.w)*TILE - 32;
 
-  const coopR = cr - 7;
-  const coopC = cc - 10;
-
-  const minX = coopC*TILE + 12;
-  const maxX = (coopC+6)*TILE - 32;
-
-  const minY = coopR*TILE + 12;
-  const maxY = (coopR+5)*TILE - 32;
+  const minY = coop.r*TILE + 12;
+  const maxY = (coop.r+coop.h)*TILE - 32;
 
   chickens.forEach(c=>{
 
@@ -2306,13 +2512,11 @@ function updateChickens(dt){
 
 function updateDucks(){
 
-  if(!window.lakeBounds) return;
+  const minX = (SEA_WIDTH+1) * TILE;
+  const maxX = (WW-1) * TILE;
 
-  const minX = window.lakeBounds.x + 18;
-  const maxX = window.lakeBounds.x + window.lakeBounds.w - 18;
-
-  const minY = window.lakeBounds.y + 18;
-  const maxY = window.lakeBounds.y + window.lakeBounds.h - 18;
+  const minY = (RIVER_TOP_ROW+1) * TILE + 12;
+  const maxY = (RIVER_TOP_ROW+3) * TILE - 12;
 
   for(const d of ducks){
 
@@ -2760,15 +2964,15 @@ function actionEnter(cells){
   }
 
   for(const [r,c] of cells){
-    if(world[r][c].t===HOUSE || world[r][c].t===HDOOR){
+    if(world[r][c].t===HOUSE || world[r][c].t===HDOOR || world[r][c].t===MARKET){
       inHouse=true;
-      showMsg('Dentro da casa!');
+      showMsg(world[r][c].t===MARKET ? 'Mercado aberto!' : 'Dentro da casa!');
       openMarket();
       return;
     }
   }
 
-  showMsg('Nenhuma casa por perto.');
+  showMsg('Nenhuma casa ou mercado por perto.');
 }
 
 function actionChop(cells){

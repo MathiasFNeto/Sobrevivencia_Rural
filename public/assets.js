@@ -34,8 +34,52 @@ const zombieSpriteFiles = [
   'zombie_action2.png'
 ];
 
+const animalFrameFiles = [
+  'walk_down_1.png',
+  'walk_down_2.png',
+  'walk_down_3.png',
+  'walk_down_4.png',
+  'walk_up_1.png',
+  'walk_up_2.png',
+  'walk_up_3.png',
+  'walk_up_4.png',
+  'walk_left_1.png',
+  'walk_left_2.png',
+  'walk_left_3.png',
+  'walk_left_4.png',
+  'walk_right_1.png',
+  'walk_right_2.png',
+  'walk_right_3.png',
+  'walk_right_4.png',
+  'eat_down_1.png',
+  'eat_down_2.png',
+  'eat_down_3.png',
+  'eat_down_4.png',
+  'eat_up_1.png',
+  'eat_up_2.png',
+  'eat_up_3.png',
+  'eat_up_4.png',
+  'eat_left_1.png',
+  'eat_left_2.png',
+  'eat_left_3.png',
+  'eat_left_4.png',
+  'eat_right_1.png',
+  'eat_right_2.png',
+  'eat_right_3.png',
+  'eat_right_4.png'
+];
+
 export const playerSprites = loadSpriteMap('assets/sprites/player', playerSpriteFiles);
 export const zombieSprites = loadSpriteMap('assets/sprites/zombie', zombieSpriteFiles);
+export const animalSprites = {
+  pig: loadSpriteMap('assets/sprites/pig', animalFrameFiles),
+  cow: loadSpriteMap('assets/sprites/cow', animalFrameFiles),
+  bull: loadSpriteMap('assets/sprites/bull', animalFrameFiles)
+};
+export const buildingSprites = {
+  barn: loadImage('assets/sprites/buildings/barn.png'),
+  market: loadImage('assets/sprites/buildings/market.png')
+};
 export const terrainTiles = {
   grass: loadImage('assets/sprites/terrain/grass.png'),
   dirt: loadImage('assets/sprites/terrain/dirt.png'),
