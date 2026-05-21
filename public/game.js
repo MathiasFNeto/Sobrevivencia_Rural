@@ -1799,15 +1799,24 @@ function drawAnimalSprite(animal){
   const img = sprites?.[`walk_${dirName}_${frame}.png`] || sprites?.[`walk_down_${frame}.png`];
   const sx=animal.x-camX;
   const sy=animal.y-camY;
-  const size = kind === 'pig' ? 64 : 78;
-
-  ctx.fillStyle='rgba(0,0,0,0.2)';
-  ctx.beginPath();
-  ctx.ellipse(sx, sy+size*0.28, size*0.34, size*0.11, 0, 0, Math.PI*2);
-  ctx.fill();
 
   if(img?.complete && img.naturalWidth){
-    ctx.drawImage(img, sx-size/2, sy-size*0.72, size, size);
+    const crop = kind === 'pig'
+      ? {x:30, y:42, w:76, h:58, dw:98, dh:74}
+      : {x:28, y:28, w:86, h:76, dw:122, dh:106};
+    const footY = sy + (kind === 'pig' ? 20 : 24);
+
+    ctx.drawImage(
+      img,
+      crop.x,
+      crop.y,
+      crop.w,
+      crop.h,
+      sx - crop.dw/2,
+      footY - crop.dh,
+      crop.dw,
+      crop.dh
+    );
     return true;
   }
 
