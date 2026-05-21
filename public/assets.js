@@ -39,7 +39,10 @@ export const zombieSprites = loadSpriteMap('assets/sprites/zombie', zombieSprite
 export const terrainTiles = {
   grass: loadImage('assets/sprites/terrain/grass.png'),
   dirt: loadImage('assets/sprites/terrain/dirt.png'),
-  water: loadImage('assets/sprites/terrain/water.png')
+  water: loadImage('assets/sprites/terrain/water.png'),
+  riverWater: loadImage('assets/sprites/terrain/river_water.png'),
+  riverEdgeTop: loadImage('assets/sprites/terrain/river_edge_top.png'),
+  riverEdgeBottom: loadImage('assets/sprites/terrain/river_edge_bottom.png')
 };
 export const objectSprites = {
   umbrella: loadImage('assets/sprites/objects/umbrella.png'),

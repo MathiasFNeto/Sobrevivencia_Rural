@@ -46,6 +46,7 @@ function applySaveData(d){
   growTimers=parseSavedJson(d.gt, growTimers);
   Object.assign(APPEARANCE,parseSavedJson(d.ap, {}));
   createCampLayout();
+  carveRiverToSea();
 
   const savedChickens = d.chickenCount ?? 2;
   const savedCows = d.cowCount ?? 2;
@@ -116,13 +117,16 @@ const LIGHT_RADIUS = 320;
 const MAX_INV = 30;
 const PLAYER_RANGE = 5 * TILE;
 
-const G=0,DIRT=1,TREE=2,ROCK=3,WATER=4,MINE=5,CS=6,CM=7,CR=8,WELL=9,TWR=10,STUMP=11,HOUSE=12,HDOOR=13,PATH=14,FENCE=15,FIRE=16,BARN=17,SILO=18,BIGROCK=19,SAND=20,FENCE_H=21,FENCE_L=22,FENCE_R=23,GATE=24,UMBRELLA=25,BOAT=26,SIGN=27;
-const SOLID=new Set([TREE,ROCK,WATER,MINE,WELL,TWR,HOUSE,BIGROCK,FENCE,FENCE_H,FENCE_L,FENCE_R]);
+const G=0,DIRT=1,TREE=2,ROCK=3,WATER=4,MINE=5,CS=6,CM=7,CR=8,WELL=9,TWR=10,STUMP=11,HOUSE=12,HDOOR=13,PATH=14,FENCE=15,FIRE=16,BARN=17,SILO=18,BIGROCK=19,SAND=20,FENCE_H=21,FENCE_L=22,FENCE_R=23,GATE=24,UMBRELLA=25,BOAT=26,SIGN=27,RIVER_TOP=28,RIVER_WATER=29,RIVER_BOTTOM=30;
+const SOLID=new Set([TREE,ROCK,WATER,RIVER_TOP,RIVER_WATER,RIVER_BOTTOM,MINE,WELL,TWR,HOUSE,BIGROCK,FENCE,FENCE_H,FENCE_L,FENCE_R]);
 const TCLR={0:'#3a7a2a',1:'#7a5a2a',2:'#1a5a1a',3:'#5a5a6a',4:'#1a4a8a',5:'#4a3a5a',6:'#4a7a2a',7:'#3a8a1a',8:'#2aaa1a',9:'#2a5a9a',10:'#6a5a1a',11:'#6a4a1a',12:'#5a4a3a',13:'#3a2a1a',14:'#d8b36a',
 15:'#8b5a2b',16:'#d96a2a',17:'#a85a2a',18:'#b0b0b0',19:'#3a7a2a',20:'#d9c27a',21:'#3a7a2a',22:'#3a7a2a',23:'#3a7a2a',24:'#3a7a2a',27:'#d2a679'};
 
 function getGroundTile(type){
   if(type===WATER)return terrainTiles.water;
+  if(type===RIVER_WATER)return terrainTiles.riverWater;
+  if(type===RIVER_TOP)return terrainTiles.riverEdgeTop;
+  if(type===RIVER_BOTTOM)return terrainTiles.riverEdgeBottom;
   if(type===DIRT || type===PATH || type===SAND || type===CS || type===CM || type===CR)return terrainTiles.dirt;
   return terrainTiles.grass;
 }
@@ -135,7 +139,7 @@ function drawGroundTile(type, sx, sy){
     return;
   }
 
-  ctx.fillStyle = type===WATER ? TCLR[WATER] : (type===DIRT || type===PATH || type===SAND ? TCLR[DIRT] : TCLR[G]);
+  ctx.fillStyle = (type===WATER || type===RIVER_WATER) ? TCLR[WATER] : (type===DIRT || type===PATH || type===SAND ? TCLR[DIRT] : TCLR[G]);
   ctx.fillRect(sx, sy, TILE, TILE);
 }
 
@@ -811,6 +815,24 @@ const joy={on:false,dx:0,dy:0,sx:0,sy:0};
 // ══════════════════════════════════════
 // WORLD GENERATION
 // ══════════════════════════════════════
+function carveRiverToSea(){
+  const riverTop = 5;
+  const riverStartC = 7;
+
+  for(let c=riverStartC;c<WW;c++){
+    world[riverTop][c]={t:RIVER_TOP};
+    world[riverTop+1][c]={t:RIVER_WATER};
+    world[riverTop+2][c]={t:RIVER_WATER};
+    world[riverTop+3][c]={t:RIVER_BOTTOM};
+  }
+
+  for(let r=riverTop+1;r<=riverTop+2;r++){
+    for(let c=0;c<riverStartC;c++){
+      world[r][c]={t:WATER};
+    }
+  }
+}
+
 function generateWorld(){
   fixedTrees=[];
   fixedRocks=[];
@@ -878,6 +900,8 @@ function generateWorld(){
       world[r][c]={t};
     }
   });
+
+  carveRiverToSea();
 
   const cr=Math.floor(WH/2);
   const cc=Math.floor(WW/2);
@@ -1471,7 +1495,7 @@ function drawWorld(){
       const sy=Math.round(r*TILE-camY);
 
 
-      if(cell.t!==G && cell.t!==DIRT && cell.t!==WATER && cell.t!==SAND && cell.t!==PATH){
+      if(cell.t!==G && cell.t!==DIRT && cell.t!==WATER && cell.t!==RIVER_TOP && cell.t!==RIVER_WATER && cell.t!==RIVER_BOTTOM && cell.t!==SAND && cell.t!==PATH){
         drawTileObject(cell.t,sx,sy,cell);
       }
 
@@ -1486,7 +1510,7 @@ function drawWorld(){
       }
 
 
-      if(isFixed(r,c) && cell.t!==TREE && cell.t!==ROCK && cell.t!==WATER && cell.t!==MINE){
+      if(isFixed(r,c) && cell.t!==TREE && cell.t!==ROCK && cell.t!==WATER && cell.t!==RIVER_TOP && cell.t!==RIVER_WATER && cell.t!==RIVER_BOTTOM && cell.t!==MINE){
         ctx.strokeStyle='rgba(255,255,80,0.15)';
         ctx.lineWidth=1;
         ctx.strokeRect(sx+1,sy+1,TILE-2,TILE-2);
@@ -2784,7 +2808,7 @@ function actionMine(cells){
 
 function actionWater(cells){
   for(const [r,c] of cells){
-    if(world[r][c].t===WATER){
+    if(world[r][c].t===WATER || world[r][c].t===RIVER_WATER){
       water = Math.min(MAX_INV, water + 3);
       spawnP(c*TILE+TILE/2,r*TILE+TILE/2,'\u{1F535}',22);
       showMsg('+3 água coletada!');
