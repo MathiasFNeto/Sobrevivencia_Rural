@@ -46,6 +46,8 @@ function applySaveData(d){
   growTimers=parseSavedJson(d.gt, growTimers);
   Object.assign(APPEARANCE,parseSavedJson(d.ap, {}));
   createCampLayout();
+  normalizeSeaAndUpperMeadow();
+  placeSeaObjects();
   carveRiverToSea();
 
   const savedChickens = d.chickenCount ?? 2;
@@ -116,6 +118,8 @@ const T_RANGE=3*TILE, T_HP=10, H_HP=200;
 const LIGHT_RADIUS = 320;
 const MAX_INV = 30;
 const PLAYER_RANGE = 5 * TILE;
+const SEA_WIDTH = 7;
+const RIVER_TOP_ROW = 5;
 
 const G=0,DIRT=1,TREE=2,ROCK=3,WATER=4,MINE=5,CS=6,CM=7,CR=8,WELL=9,TWR=10,STUMP=11,HOUSE=12,HDOOR=13,PATH=14,FENCE=15,FIRE=16,BARN=17,SILO=18,BIGROCK=19,SAND=20,FENCE_H=21,FENCE_L=22,FENCE_R=23,GATE=24,UMBRELLA=25,BOAT=26,SIGN=27,RIVER_TOP=28,RIVER_WATER=29,RIVER_BOTTOM=30;
 const SOLID=new Set([TREE,ROCK,WATER,RIVER_TOP,RIVER_WATER,RIVER_BOTTOM,MINE,WELL,TWR,HOUSE,BIGROCK,FENCE,FENCE_H,FENCE_L,FENCE_R]);
@@ -815,19 +819,55 @@ const joy={on:false,dx:0,dy:0,sx:0,sy:0};
 // ══════════════════════════════════════
 // WORLD GENERATION
 // ══════════════════════════════════════
-function carveRiverToSea(){
-  const riverTop = 5;
-  const riverStartC = 7;
+function normalizeSeaAndUpperMeadow(){
+  fixedWater = fixedWater.filter(([r,c])=>c<SEA_WIDTH || r>=RIVER_TOP_ROW);
+  fixedTrees = fixedTrees.filter(([r,c])=>!(r<RIVER_TOP_ROW && c>=SEA_WIDTH));
 
-  for(let c=riverStartC;c<WW;c++){
-    world[riverTop][c]={t:RIVER_TOP};
-    world[riverTop+1][c]={t:RIVER_WATER};
-    world[riverTop+2][c]={t:RIVER_WATER};
-    world[riverTop+3][c]={t:RIVER_BOTTOM};
+  for(let r=0;r<WH;r++){
+    for(let c=0;c<SEA_WIDTH;c++){
+      world[r][c]={t:WATER};
+    }
+
+    for(let c=SEA_WIDTH;c<10;c++){
+      if(world[r]?.[c]?.t===SAND || world[r]?.[c]?.t===UMBRELLA){
+        world[r][c]={t:G};
+      }
+    }
   }
 
-  for(let r=riverTop+1;r<=riverTop+2;r++){
-    for(let c=0;c<riverStartC;c++){
+  for(let r=0;r<RIVER_TOP_ROW;r++){
+    for(let c=SEA_WIDTH;c<WW;c++){
+      const treePattern = r>=2 && ((r*17 + c*11) % 23 === 0);
+      world[r][c]={t:treePattern ? TREE : G};
+      if(treePattern)fixedTrees.push([r,c]);
+    }
+  }
+}
+
+function placeSeaObjects(){
+  const seaObjects = [
+    {r:9, c:2, t:BOAT},
+    {r:21, c:3, t:BOAT},
+    {r:33, c:2, t:BOAT}
+  ];
+
+  seaObjects.forEach(({r,c,t})=>{
+    if(world[r]?.[c]){
+      world[r][c]={t};
+    }
+  });
+}
+
+function carveRiverToSea(){
+  for(let c=SEA_WIDTH;c<WW;c++){
+    world[RIVER_TOP_ROW][c]={t:RIVER_TOP};
+    world[RIVER_TOP_ROW+1][c]={t:RIVER_WATER};
+    world[RIVER_TOP_ROW+2][c]={t:RIVER_WATER};
+    world[RIVER_TOP_ROW+3][c]={t:RIVER_BOTTOM};
+  }
+
+  for(let r=RIVER_TOP_ROW+1;r<=RIVER_TOP_ROW+2;r++){
+    for(let c=0;c<SEA_WIDTH;c++){
       world[r][c]={t:WATER};
     }
   }
@@ -852,15 +892,9 @@ function generateWorld(){
     for(let c=0;c<WW;c++){
 
       // água fixa à esquerda
-      if(c<7){
+      if(c<SEA_WIDTH){
         world[r][c]={t:WATER};
         fixedWater.push([r,c]);
-        continue;
-      }
-
-      // areia depois da água
-      if(c>=7 && c<10){
-        world[r][c]={t:SAND};
         continue;
       }
 
@@ -873,34 +907,8 @@ function generateWorld(){
     }
   }
 
-  // manter a faixa superior com praia/mar, sem parede de pedras
-  for(let r=0; r<4; r++){
-    for(let c=0; c<WW; c++){
-      if(r<2){
-        world[r][c]={t:WATER};
-        if(c>=7)fixedWater.push([r,c]);
-      }else {
-        world[r][c]={t:SAND};
-      }
-    }
-  }
-
-  // objetos grandes da praia/mar ficam fixos para nao sobrepor
-  const beachObjects = [
-    {r:7, c:8, t:UMBRELLA},
-    {r:18, c:8, t:UMBRELLA},
-    {r:29, c:8, t:UMBRELLA},
-    {r:9, c:2, t:BOAT},
-    {r:21, c:3, t:BOAT},
-    {r:33, c:2, t:BOAT}
-  ];
-
-  beachObjects.forEach(({r,c,t})=>{
-    if(world[r]?.[c]){
-      world[r][c]={t};
-    }
-  });
-
+  normalizeSeaAndUpperMeadow();
+  placeSeaObjects();
   carveRiverToSea();
 
   const cr=Math.floor(WH/2);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'sobrevivencia-rural-v26';
+const CACHE_NAME = 'sobrevivencia-rural-v27';
 
 const urlsToCache = [
   './',
@@ -24,6 +24,9 @@ const urlsToCache = [
   './assets/sprites/terrain/grass.png',
   './assets/sprites/terrain/dirt.png',
   './assets/sprites/terrain/water.png',
+  './assets/sprites/terrain/river_water.png',
+  './assets/sprites/terrain/river_edge_top.png',
+  './assets/sprites/terrain/river_edge_bottom.png',
   './assets/sprites/objects/umbrella.png',
   './assets/sprites/objects/boat.png',
   './assets/sprites/objects/duck_right.png',
