@@ -1041,7 +1041,7 @@ function generateWorld(){
     const r = 4 + Math.floor(Math.random() * (WH - 4));
     const c = 10 + Math.floor(Math.random() * (WW - 10));
 
-    if(world[r]?.[c]?.t === G){
+    if(world[r]?.[c]?.t === G && !isProtectedFarmTile(r,c)){
       world[r][c]={t:ROCK};
       fixedRocks.push([r,c]);
     }
@@ -1050,17 +1050,19 @@ function generateWorld(){
 
 function getFarmLayout(){
   return {
+    clear: {r1:9, c1:SEA_WIDTH, r2:42, c2:50},
     roadCol: 10,
-    topRoadR: 16,
+    topRoadR: 15,
     mainRoadR: 25,
     centerRoadC: 26,
-    house: {r:11, c:16, w:3, h:3},
-    market: {r:11, c:25, w:5, h:3},
-    coop: {r:19, c:16, w:6, h:5, gate:'bottom', gateOffset:2},
-    cowPen: {r:19, c:25, w:7, h:5, gate:'bottom', gateOffset:3},
-    barn: {r:19, c:40, w:4, h:4},
-    crops: {r:30, c:16, w:6, h:5, gate:'top', gateOffset:2},
-    pigPen: {r:30, c:25, w:7, h:5, gate:'top', gateOffset:3}
+    roadWidth: 2,
+    house: {r:11, c:15, w:3, h:3},
+    market: {r:10, c:25, w:5, h:4},
+    coop: {r:18, c:15, w:7, h:5, gate:'bottom', gateOffset:3},
+    cowPen: {r:18, c:25, w:8, h:5, gate:'bottom', gateOffset:4},
+    barn: {r:18, c:42, w:4, h:4},
+    crops: {r:28, c:15, w:7, h:5, gate:'top', gateOffset:3},
+    pigPen: {r:28, c:25, w:8, h:5, gate:'top', gateOffset:4}
   };
 }
 
@@ -1070,6 +1072,19 @@ function fillTiles(r1,c1,r2,c2,type){
       if(world[r]?.[c]) world[r][c]={t:type};
     }
   }
+}
+
+function isInRect(r, c, rect){
+  return r>=rect.r1 && r<=rect.r2 && c>=rect.c1 && c<=rect.c2;
+}
+
+function isProtectedFarmTile(r, c){
+  const layout = getFarmLayout();
+  return isInRect(r, c, layout.clear);
+}
+
+function drawPathRect(r, c, h, w){
+  fillTiles(r, c, r+h-1, c+w-1, PATH);
 }
 
 function placeFenceArea(area, floorType=G){
@@ -1120,18 +1135,20 @@ function spawnDucksInRiver(){
 
 function createNewCampLayout(){
   const layout = getFarmLayout();
+  const clear = layout.clear;
 
-  fillTiles(9, SEA_WIDTH, 38, 46, G);
-  fixedTrees = fixedTrees.filter(([r,c])=>!(r>=9 && r<=38 && c>=SEA_WIDTH && c<=46));
-  fixedRocks = fixedRocks.filter(([r,c])=>!(r>=9 && r<=38 && c>=SEA_WIDTH && c<=46));
+  fillTiles(clear.r1, clear.c1, clear.r2, clear.c2, G);
+  fixedTrees = fixedTrees.filter(([r,c])=>!isInRect(r, c, clear));
+  fixedRocks = fixedRocks.filter(([r,c])=>!isInRect(r, c, clear));
+  fixedWater = fixedWater.filter(([r,c])=>!isInRect(r, c, clear));
   restoreBeachStrip();
   placeSeaObjects();
   carveRiverToSea();
 
-  for(let r=RIVER_TOP_ROW+4;r<=38;r++) world[r][layout.roadCol]={t:PATH};
-  for(let c=layout.roadCol;c<=layout.barn.c+layout.barn.w-1;c++) world[layout.mainRoadR][c]={t:PATH};
-  for(let c=layout.house.c-1;c<=layout.market.c+layout.market.w;c++) world[layout.topRoadR][c]={t:PATH};
-  for(let r=layout.topRoadR;r<=38;r++) world[r][layout.centerRoadC]={t:PATH};
+  drawPathRect(RIVER_TOP_ROW+4, layout.roadCol, clear.r2-(RIVER_TOP_ROW+4)+1, layout.roadWidth);
+  drawPathRect(layout.topRoadR, layout.house.c-1, layout.roadWidth, layout.market.c+layout.market.w-layout.house.c+2);
+  drawPathRect(layout.mainRoadR, layout.roadCol, layout.roadWidth, layout.barn.c+layout.barn.w-layout.roadCol);
+  drawPathRect(layout.topRoadR, layout.centerRoadC, clear.r2-layout.topRoadR+1, layout.roadWidth);
 
   const h=layout.house;
   for(let r=h.r; r<h.r+h.h; r++){
@@ -1153,7 +1170,7 @@ function createNewCampLayout(){
   placeBuilding(layout.market, MARKET);
   placeBuilding(layout.barn, BARN);
   placeFenceArea(layout.coop, DIRT);
-  placeFenceArea(layout.cowPen, G);
+  placeFenceArea(layout.cowPen, DIRT);
   placeFenceArea(layout.crops, G);
   placeFenceArea(layout.pigPen, DIRT);
 
@@ -1173,8 +1190,8 @@ function createNewCampLayout(){
   for(let i=0;i<3;i++) addPig();
   spawnDucksInRiver();
 
-  player.x=layout.centerRoadC*TILE+TILE/2;
-  player.y=layout.mainRoadR*TILE+TILE/2;
+  player.x=(layout.centerRoadC+0.5)*TILE;
+  player.y=(layout.mainRoadR+0.5)*TILE;
   dog.x = player.x - 35;
   dog.y = player.y + 30;
 
@@ -1782,7 +1799,7 @@ function drawAnimalSprite(animal){
   const img = sprites?.[`walk_${dirName}_${frame}.png`] || sprites?.[`walk_down_${frame}.png`];
   const sx=animal.x-camX;
   const sy=animal.y-camY;
-  const size = kind === 'pig' ? 44 : 58;
+  const size = kind === 'pig' ? 64 : 78;
 
   ctx.fillStyle='rgba(0,0,0,0.2)';
   ctx.beginPath();
