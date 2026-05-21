@@ -1801,10 +1801,21 @@ function drawAnimalSprite(animal){
   const sy=animal.y-camY;
 
   if(img?.complete && img.naturalWidth){
-    const crop = kind === 'pig'
-      ? {x:30, y:42, w:76, h:58, dw:98, dh:74}
-      : {x:28, y:28, w:86, h:76, dw:122, dh:106};
-    const footY = sy + (kind === 'pig' ? 20 : 24);
+    let crop;
+
+    if(kind === 'pig'){
+      crop = {x:30, y:42, w:76, h:58, dw:98, dh:74, foot:20};
+    }else if(dirName === 'left'){
+      crop = {x:12, y:30, w:88, h:66, dw:136, dh:102, foot:24};
+    }else if(dirName === 'right'){
+      crop = {x:28, y:30, w:88, h:66, dw:136, dh:102, foot:24};
+    }else if(dirName === 'up'){
+      crop = {x:40, y:24, w:48, h:96, dw:90, dh:132, foot:28};
+    }else{
+      crop = {x:40, y:40, w:48, h:72, dw:90, dh:116, foot:26};
+    }
+
+    const footY = sy + crop.foot;
 
     ctx.drawImage(
       img,
